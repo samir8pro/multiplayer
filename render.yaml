@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: blockfun-new-multiplayer
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: ALLOWED_ORIGINS
+        value: https://dynamic-klepon-d46485.netlify.app
