@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: blockfun-multiplayer
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: ALLOWED_ORIGINS
+        value: https://zippy-piroshki-e7d3fc.netlify.app
