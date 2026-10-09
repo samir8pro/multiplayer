@@ -2,8 +2,8 @@
  'use strict';
  const $=id=>document.getElementById(id),play=$('play'),status=$('startStatus'),retry=$('retryMotor');
  let wantsToPlay=false, failed=false, booted=false, attemptStarted=performance.now();
- function show(msg,isError=false){status.textContent=msg;status.style.color=isError?'#ffb8a9':'';retry.style.display=isError?'block':'none';if(isError){play.textContent='↻ RETRY';}else if(!booted){play.textContent=wantsToPlay?'⏳ LOADING...':'▶ PLAY NOW';}}
- function ready(){if(failed)return;booted=true;show('✅ Engine ready');play.textContent='▶ PLAY NOW';if(wantsToPlay)launch();}
+ function show(msg,isError=false){status.textContent=msg;status.style.color=isError?'#ffb8a9':'';retry.style.display=isError?'block':'none';if(isError){play.textContent='RETRY';}else if(!booted){play.textContent=wantsToPlay?'LOADING...':'PLAY NOW';}}
+ function ready(){if(failed)return;booted=true;show('Engine ready');play.textContent='PLAY NOW';if(wantsToPlay)launch();}
  function launch(){wantsToPlay=true;if(failed){reload();return}if(window.BLOCKFUN_READY&&typeof window.BLOCKFUN_START==='function'){
     try{window.BLOCKFUN_START();}catch(e){fail('Game start error: '+(e?.message||'unknown'))}
     return;
