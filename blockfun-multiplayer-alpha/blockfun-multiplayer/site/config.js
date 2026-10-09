@@ -1,3 +1,3 @@
-// Configure after deploying the WebSocket server on Render.
-// Example: wss://your-blockfun-multiplayer.onrender.com
-window.BLOCKFUN_WS_URL = '';
+window.BLOCKFUN_WS_URL = 'wss://multiplayer-xnqs.onrender.com';
+// Real coin creation: only configure after deploying your secure Render coin service.
+window.BLOCKFUN_COIN_API_URL = '';
