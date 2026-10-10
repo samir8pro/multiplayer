@@ -5,7 +5,7 @@ const $ = id => document.getElementById(id);
 const canvas=$('world');
 const gl=(canvas.getContext('webgl',{antialias:false,alpha:false,depth:true,powerPreference:'low-power',preserveDrawingBuffer:false}) || canvas.getContext('webgl',{antialias:false,alpha:false,depth:true}) || canvas.getContext('experimental-webgl'));
 if(!gl){throw Error('WebGL unavailable. Try Chrome or enable hardware acceleration')}
-const WORLD_HALF=500, SAFE_HALF=50, CHUNK=16, RADIUS=2;
+const WORLD_HALF=50, SAFE_HALF=50, CHUNK=16, RADIUS=2;
 const eye={x:0,y:1.62,z:14,yaw:0,pitch:0,vy:0,ground:true};
 const textureNames=['Grass','Dirt','Stone','Ore'];
 const inv={grass:0,dirt:0,stone:0,ore:0};
@@ -133,6 +133,7 @@ function tryMoveAxis(nx,nz){let feet=eye.y-EYE_HEIGHT;
  return false
 }
 // House / protected spawn geometry batched into a single WebGL draw.
+const seats=[];let seated=null;
 function constructSpawn(){let B=new Builder();
  const S=(x,y,z,sx,sy,sz,t)=>{B.box(x,y,z,sx,sy,sz,t);addSolid(x,y,z,sx,sy,sz)};
  const D=(x,y,z,sx,sy,sz,t)=>B.box(x,y,z,sx,sy,sz,t);
@@ -188,6 +189,16 @@ function constructSpawn(){let B=new Builder();
  // A 2-step walkable porch and oak-decorated inside, Minecraft-like crafting cabin.
  S(0,.28,-11.1,3.6,.40,1.7,4);
  C(0,1.34,-18.8); // crafting table with Minecraft-like top and side textures
+ for(const [x,z,dx,dz] of [[-3,-18.8,-1,0],[3,-18.8,1,0],[0,-21.8,0,-1],[0,-15.8,0,1]]){
+  // Real chair: square seat, four short legs, two back posts and one wide back board.
+  S(x,1.00,z,1.22,.28,1.22,5);
+  for(const [lx,lz] of [[-.43,-.43],[.43,-.43],[-.43,.43],[.43,.43]])S(x+lx,.63,z+lz,.16,.74,.16,5);
+  const rx=-dz,rz=dx,bx=x+dx*.50,bz=z+dz*.50;
+  S(bx+rx*.43,1.46,bz+rz*.43,.16,.88,.16,5);
+  S(bx-rx*.43,1.46,bz-rz*.43,.16,.88,.16,5);
+  S(bx,1.72,bz,dx!==0?.18:1.10,.38,dx!==0?1.10:.18,5);
+  seats.push({x,z,top:1.14,dx,dz});
+ }
  S(-4.5,1.34,-22,2,1,1,5);S(4.5,1.34,-22,2,1,1,5); // full-block benches
  // four lantern stands on the plaza path
  for(const [x,z] of [[-6,-6],[6,-6],[-6,9],[6,9]]){S(x,1,z,.8,2,.8,5);D(x,2.33,z,1.1,.45,1.1,11)}
@@ -265,7 +276,7 @@ function updatePreviewSkin(){
  const colors=[['#3f8b91','#e0aa7e','#5a3428'],['#659b43','#f0c19a','#392c26'],['#3b64a4','#b77b57','#271d20'],['#8c4a81','#e2b5a0','#9c632e'],['#9d593f','#c58a62','#2e2521'],['#61717c','#efbc95','#b38a56']];
  const [shirt,skin,hair]=colors[player.skin%colors.length];
  if(pv){pv.style.setProperty('--shirt',shirt);pv.style.setProperty('--sleeve',shirt);pv.style.setProperty('--skin',skin);pv.style.setProperty('--hair',hair)}
- if(hand)hand.src='./assets/skins/arm'+(player.skin%6)+'.png';
+ if(hand){hand.style.setProperty('--shirt',shirt);hand.style.setProperty('--skin',skin)}
 }
 const playerTags=new Map();let lastTagUpdate=0;
 function showPlayerTags(now,vp){
@@ -298,7 +309,7 @@ function send(message){if(net.ws?.readyState===WebSocket.OPEN)net.ws.send(JSON.s
 const controls={forward:0,strafe:0,joystick:false};let touchId=null;
 const stick=$('joystick'),knob=$('knob');function stickMove(e){const r=stick.getBoundingClientRect();let x=e.clientX-(r.left+r.width/2),y=e.clientY-(r.top+r.height/2);let radius=r.width*.29,mag=Math.hypot(x,y);if(mag>radius){x*=radius/mag;y*=radius/mag}controls.forward=-y/radius;controls.strafe=x/radius;knob.style.transform=`translate(${x}px,${y}px)`}
 stick.onpointerdown=e=>{e.preventDefault();touchId=e.pointerId;controls.joystick=true;stick.setPointerCapture(touchId);stickMove(e)};stick.onpointermove=e=>{if(e.pointerId===touchId)stickMove(e)};function stickEnd(e){if(e.pointerId!==touchId)return;controls.joystick=false;controls.forward=controls.strafe=0;touchId=null;knob.style.transform='translate(0,0)'}stick.onpointerup=stickEnd;stick.onpointercancel=stickEnd;
-let tapOriginX=0,tapOriginY=0,tapMoved=false;canvas.addEventListener('pointerdown',e=>{if(!playing||typing)return;lookPointer=e.pointerId;tapOriginX=lastLookX=e.clientX;tapOriginY=lastLookY=e.clientY;tapMoved=false;canvas.setPointerCapture(e.pointerId)});canvas.addEventListener('pointermove',e=>{if(lookPointer!==e.pointerId||!playing)return;let dx=e.clientX-lastLookX,dy=e.clientY-lastLookY;lastLookX=e.clientX;lastLookY=e.clientY;if(Math.hypot(e.clientX-tapOriginX,e.clientY-tapOriginY)>10)tapMoved=true;eye.yaw-=dx*.0045;eye.pitch=Math.max(-1.25,Math.min(1.25,eye.pitch-dy*.0037))});canvas.addEventListener('pointerup',e=>{if(e.pointerId===lookPointer){lookPointer=null;if(!tapMoved&&isNearCraft()&&isLookingAtCraft())openCraft()}});canvas.addEventListener('pointercancel',e=>{if(e.pointerId===lookPointer)lookPointer=null});canvas.oncontextmenu=e=>{e.preventDefault();if(playing&&!typing)interact()};
+let tapOriginX=0,tapOriginY=0,tapMoved=false;canvas.addEventListener('pointerdown',e=>{if(!playing||typing)return;lookPointer=e.pointerId;tapOriginX=lastLookX=e.clientX;tapOriginY=lastLookY=e.clientY;tapMoved=false;canvas.setPointerCapture(e.pointerId)});canvas.addEventListener('pointermove',e=>{if(lookPointer!==e.pointerId||!playing)return;let dx=e.clientX-lastLookX,dy=e.clientY-lastLookY;lastLookX=e.clientX;lastLookY=e.clientY;if(Math.hypot(e.clientX-tapOriginX,e.clientY-tapOriginY)>10)tapMoved=true;eye.yaw-=dx*.0045;eye.pitch=Math.max(-1.25,Math.min(1.25,eye.pitch-dy*.0037))});canvas.addEventListener('pointerup',e=>{if(e.pointerId===lookPointer){lookPointer=null;if(!tapMoved&&!seated&&(lookedSeat()||isNearCraft()&&isLookingAtCraft()))interact()}});canvas.addEventListener('pointercancel',e=>{if(e.pointerId===lookPointer)lookPointer=null});canvas.oncontextmenu=e=>{e.preventDefault();if(playing&&!typing)interact()};
 window.addEventListener('keydown',e=>{if(e.target instanceof HTMLInputElement||e.target instanceof HTMLTextAreaElement)return;keys[e.code]=true;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(!playing)return;if(e.code==='KeyE'){toggle('inventoryPanel');return}if(e.code==='KeyT'){toggle('chatPanel');return}if(e.code==='KeyR'){interact();return}if(e.code==='Escape'){for(const el of document.querySelectorAll('.panel'))el.classList.add('hidden');if($('spawnPopup'))$('spawnPopup').classList.add('hidden');typing=false;return}if(e.code==='KeyF'){mine();return}if(e.code==='KeyP'){place();return}if(e.code==='KeyI'){toggle('inventoryPanel');return}if(e.code==='Digit1'||e.code==='Digit2'||e.code==='Digit3'||e.code==='Digit4'||e.code==='Digit5'||e.code==='Digit6'||e.code==='Digit7'||e.code==='Digit8'||e.code==='Digit9'){selectSlot(Number(e.code.replace('Digit',''))-1);return}});window.addEventListener('keyup',e=>keys[e.code]=false);window.addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
 $('jumpBtn').onpointerdown=e=>{e.preventDefault();keys.Space=true};$('jumpBtn').onpointerup=()=>keys.Space=false;$('jumpBtn').onpointercancel=()=>keys.Space=false;
 function toggle(id,open){for(const p of document.querySelectorAll('.panel'))if(p.id!==id)p.classList.add('hidden');const el=$(id),show=open??el.classList.contains('hidden');el.classList.toggle('hidden',!show);typing=show&&id==='chatPanel';if(typing)$('chatInput').focus()}
@@ -321,9 +332,25 @@ function isLookingAtCraft(){
  }
  return true
 }
+function rayHitsBox(box){
+ const dir=rayForward(),origin=[eye.x,eye.y,eye.z],v=[dir.x,dir.y,dir.z];let enter=0,exit=3;
+ for(let i=0;i<3;i++){
+  if(Math.abs(v[i])<.00001){if(origin[i]<box[i][0]||origin[i]>box[i][1])return false;continue}
+  let a=(box[i][0]-origin[i])/v[i],b=(box[i][1]-origin[i])/v[i];if(a>b)[a,b]=[b,a];enter=Math.max(enter,a);exit=Math.min(exit,b);if(exit<enter)return false;
+ }
+ return true
+}
+function lookedSeat(){let best=null;for(const s of seats){const d=Math.hypot(eye.x-s.x,eye.z-s.z);if(d<2.4&&rayHitsBox([[s.x-.7,s.x+.7],[.35,2.1],[s.z-.7,s.z+.7]])&&(!best||d<best.d))best={s,d}}return best}
+function leaveSeat(){
+ const s=seated,candidates=[[s.x+s.dz*1.65,s.z-s.dx*1.65],[s.x-s.dz*1.65,s.z+s.dx*1.65],[s.x-s.dx*1.75,s.z-s.dz*1.75]];
+ const spot=candidates.find(([x,z])=>!intersectBody(x,.86,z))||[0,14],support=topSupport(spot[0],spot[1],2.1,-.2);
+ eye.x=spot[0];eye.z=spot[1];eye.y=(Number.isFinite(support)?support:0)+EYE_HEIGHT+.03;eye.vy=0;eye.ground=true;seated=null;toast('Standing up')
+}
 function openCraft(){if(!playing)return;toggle('craftPanel',true);updateCraftLeft()}
 function interact(){
- if(isNearCraft()){openCraft();return}
+ if(seated){leaveSeat();return}
+ const targetSeat=lookedSeat();if(targetSeat){seated=targetSeat.s;eye.x=seated.x-seated.dx*.18;eye.z=seated.z-seated.dz*.18;eye.y=seated.top+.95;eye.vy=0;eye.ground=true;for(const k in keys)keys[k]=false;toast('Seated');return}
+ if(isNearCraft()&&isLookingAtCraft()){openCraft();return}
  if(Math.hypot(eye.x-24,eye.z-15)<5){openMarket();return}
  if(Math.hypot(eye.x-quarry.x,eye.z-quarry.z)<9){toast('Peaceful quarry: tap MINE to collect ore');return}
  toast('Walk into the house. Use R or tap the table to craft.')
@@ -386,7 +413,10 @@ window.BLOCKFUN_START=start;window.BLOCKFUN_READY=true;window.dispatchEvent(new 
 function resize(){const w=window.innerWidth,h=window.innerHeight;canvas.width=Math.max(1,Math.round(w*quality));canvas.height=Math.max(1,Math.round(h*quality));canvas.style.width=w+'px';canvas.style.height=h+'px';gl.viewport(0,0,canvas.width,canvas.height)}resize();window.addEventListener('resize',resize);
 // Main loop: small viewport, ~25 chunk draw calls, no lighting shadows or trees.
 function tick(now){requestAnimationFrame(tick);const dt=Math.min(.045,(now-lastFrame)/1000);lastFrame=now;
- if(playing&&!typing){let f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)+controls.forward,s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+controls.strafe;let n=Math.max(1,Math.hypot(f,s)),speed=5.4*dt;let nx=eye.x+(-Math.sin(eye.yaw)*f+Math.cos(eye.yaw)*s)/n*speed,nz=eye.z+(-Math.cos(eye.yaw)*f-Math.sin(eye.yaw)*s)/n*speed;
+ if(playing&&!typing){
+ if(seated&&(keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD||keys.Space||Math.abs(controls.forward)+Math.abs(controls.strafe)>.07))leaveSeat();
+ if(seated){eye.y=seated.top+.95;eye.vy=0;eye.ground=true}else{
+ let f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)+controls.forward,s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+controls.strafe;let n=Math.max(1,Math.hypot(f,s)),speed=5.4*dt;let nx=eye.x+(-Math.sin(eye.yaw)*f+Math.cos(eye.yaw)*s)/n*speed,nz=eye.z+(-Math.cos(eye.yaw)*f-Math.sin(eye.yaw)*s)/n*speed;
  if(Math.abs(nx)<WORLD_HALF-1)tryMoveAxis(nx,eye.z);
  if(Math.abs(nz)<WORLD_HALF-1)tryMoveAxis(eye.x,nz);
  if(keys.Space&&eye.ground){eye.vy=6.3;eye.ground=false}
@@ -401,8 +431,8 @@ function tick(now){requestAnimationFrame(tick);const dt=Math.min(.045,(now-lastF
   else eye.ground=false;
  }
  eye.y=newFeet+EYE_HEIGHT;
- if(eye.y<-2.1){eye.x=0;eye.z=14;eye.y=EYE_HEIGHT;eye.vy=0;eye.ground=true;toast('Returned to spawn · Peaceful mode')}}
- updateChunks();const dir=rayForward(),moving=playing&&(keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD||Math.abs(controls.forward)+Math.abs(controls.strafe)>.07),bob=(moving&&eye.ground)?Math.sin(now*.015)*.028:0,camY=eye.y+bob;const hand=$('handOverlay');if(hand){const swing=(moving&&eye.ground)?Math.sin(now*.017):0;const uiOpen=!!document.querySelector('.panel:not(.hidden)')||!$('spawnPopup').classList.contains('hidden');hand.style.opacity=playing&&!uiOpen?'1':'0';hand.style.transform='translate('+((moving?swing*9:0))+'px,'+((moving?Math.abs(swing)*11:0))+'px) rotate('+(moving?swing*5:0)+'deg)';}const vp=mul(persp(Math.PI*.40,canvas.width/canvas.height,.1,108),lookAt(eye.x,camY,eye.z,eye.x+dir.x,camY+dir.y,eye.z+dir.z));viewProj=vp;
+ if(eye.y<-2.1){eye.x=0;eye.z=14;eye.y=EYE_HEIGHT;eye.vy=0;eye.ground=true;toast('Returned to spawn · Peaceful mode')}}}
+ updateChunks();const dir=rayForward(),moving=playing&&(keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD||Math.abs(controls.forward)+Math.abs(controls.strafe)>.07),camY=eye.y;const hand=$('handOverlay');if(hand){const uiOpen=!!document.querySelector('.panel:not(.hidden)')||!$('spawnPopup').classList.contains('hidden');hand.style.opacity=playing&&!uiOpen?'1':'0'}const vp=mul(persp(Math.PI*.40,canvas.width/canvas.height,.1,108),lookAt(eye.x,camY,eye.z,eye.x+dir.x,camY+dir.y,eye.z+dir.z));viewProj=vp;
  gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uni.vp,false,vp);gl.uniform3f(uni.eye,eye.x,eye.y,eye.z);gl.uniform3f(uni.sky,.55,.75,1);
  gl.bindTexture(gl.TEXTURE_2D,atlas);for(const m of chunks.values())drawMesh(m);drawMesh(spawnMesh);drawMesh(quarryMesh);
  for(const p of remotes.values()){let t=Math.min(1,dt*9);p.x+=(p.targetX-p.x)*t;p.y+=(p.targetY-p.y)*t;p.z+=(p.targetZ-p.z)*t;const phase=p.moving?Math.floor(now/105)%8:0;gl.bindTexture(gl.TEXTURE_2D,skinTextures[p.skin%6]||atlas);drawMesh(getAvatarMesh(p.skin||0,phase),p.x,p.y-1.7,p.z,p.yaw||0)}
