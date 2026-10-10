@@ -18,7 +18,7 @@ function toast(message){$('toast').textContent=message;$('toast').style.opacity=
 function setContext(t){$('contextHint').textContent=t}
 // --- GLSL shader: one atlas, instanced-looking batch of exposed faces.
 const vs=`attribute vec3 aP; attribute vec2 aUV; attribute float aTile; attribute float aShade; uniform mat4 uVP; uniform vec3 uOffset; uniform float uYaw; varying vec2 vUV; varying float vTile; varying float vShade; varying vec3 vPos; void main(){float c=cos(uYaw),s=sin(uYaw);vec3 p=vec3(c*aP.x+s*aP.z,aP.y,-s*aP.x+c*aP.z)+uOffset;vPos=p;vUV=aUV;vTile=aTile;vShade=aShade;gl_Position=uVP*vec4(p,1.);}`;
-const fs=`precision mediump float; varying vec2 vUV; varying float vTile; varying float vShade; varying vec3 vPos; uniform sampler2D uAtlas; uniform vec3 uEye; uniform vec3 uSky; void main(){float t=floor(vTile+.1);vec2 at=vec2(mod(t,4.),floor(t/4.));vec2 uv=(at+mix(vec2(.012),vec2(.988),fract(vUV)))/vec2(4.,8.);vec4 texel=texture2D(uAtlas,uv);float plant=step(15.5,t);if(plant>.5&&texel.a<.12)discard;vec3 color=texel.rgb*vShade;if(t<.5)color*=vec3(.92,1.18,.86);float glass=step(13.55,vTile)*step(vTile,13.95);color=mix(color,vec3(.9,.05,.08)*vShade,glass*.82);float dist=distance(uEye,vPos);float fog=clamp((dist-41.)/24.,0.,1.);float alpha=mix(mix(1.,.38,glass),texel.a,plant);gl_FragColor=vec4(mix(color,uSky,fog),alpha);}`;
+const fs=`precision mediump float; varying vec2 vUV; varying float vTile; varying float vShade; varying vec3 vPos; uniform sampler2D uAtlas; uniform vec3 uEye; uniform vec3 uSky; void main(){float t=floor(vTile+.1);vec2 at=vec2(mod(t,4.),floor(t/4.));vec2 uv=(at+mix(vec2(.012),vec2(.988),fract(vUV)))/vec2(4.,8.);vec4 texel=texture2D(uAtlas,uv);float plant=step(15.5,t);if(plant>.5&&texel.a<.12)discard;vec3 color=texel.rgb*vShade;if(t<.5)color*=vec3(.92,1.18,.86);if(t>17.5&&t<18.5)color*=vec3(.38,1.08,.32);float glass=step(13.55,vTile)*step(vTile,13.95);color=mix(color,vec3(.9,.05,.08)*vShade,glass*.82);float dist=distance(uEye,vPos);float fog=clamp((dist-41.)/24.,0.,1.);float alpha=mix(mix(1.,.38,glass),texel.a,plant);gl_FragColor=vec4(mix(color,uSky,fog),alpha);}`;
 function shader(type,src){let s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s}
 let program=gl.createProgram();gl.attachShader(program,shader(gl.VERTEX_SHADER,vs));gl.attachShader(program,shader(gl.FRAGMENT_SHADER,fs));gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));gl.useProgram(program);
 const attr={p:gl.getAttribLocation(program,'aP'),uv:gl.getAttribLocation(program,'aUV'),tile:gl.getAttribLocation(program,'aTile'),shade:gl.getAttribLocation(program,'aShade')};
@@ -137,7 +137,6 @@ const seats=[];let seated=null;
 function constructSpawn(){let B=new Builder();
  const S=(x,y,z,sx,sy,sz,t)=>{B.box(x,y,z,sx,sy,sz,t);addSolid(x,y,z,sx,sy,sz)};
  const D=(x,y,z,sx,sy,sz,t)=>B.box(x,y,z,sx,sy,sz,t);
- const G=(x,y,z,sx,sy,sz)=>{B.box6(x,y,z,sx,sy,sz,0,2,1,1,1,1);addSolid(x,y,z,sx,sy,sz)};
  const P=(x,z,t,h=.9,w=.82)=>{const y=.045,u=[[0,0],[1,0],[1,1],[0,1]];B.quad([[x-w/2,y,z-w/2],[x+w/2,y,z+w/2],[x+w/2,y+h,z+w/2],[x-w/2,y+h,z-w/2]],u,t,1);B.quad([[x+w/2,y,z-w/2],[x-w/2,y,z+w/2],[x-w/2,y+h,z+w/2],[x+w/2,y+h,z-w/2]],u,t,.92)};
  const C=(x,y,z)=>{B.box6(x,y,z,1,1,1,15,5,14,14,14,14);addSolid(x,y,z,1,1,1)};
  // Minecraft survival aesthetic: one real cottage, stone paths, low fence and four corner lamps.
@@ -204,7 +203,6 @@ function constructSpawn(){let B=new Builder();
  for(const [x,z,t] of [[-12,-12,8],[-14,-12,5],[12,-12,8],[14,-12,4]])S(x,.5,z,1,1,1,t);
  // Texture-pack garden: crossed transparent flowers/tall grass plus chunky grass blocks.
  for(const [x,z,t] of [[-13,2,16],[-10,7,17],[-15,11,18],[-9,15,16],[-17,19,17],[13,2,18],[10,7,16],[15,11,17],[9,15,18],[17,19,16],[-31,-5,18],[-34,1,16],[31,-5,17],[34,1,18]])P(x,z,t,t===18?1.05:.88,t===18?.96:.78);
- for(const [x,z,s] of [[-21,22,1.8],[-24,24,1.25],[22,23,1.8],[25,21,1.25]])G(x,s*.42,z,s,s*.84,s);
  // Simple stone plinth on the far path, visibly solid.
  S(-24,.32,15,7,.64,6,8); S(-24,.99,15,1.7,.7,1.7,11);
  return makeMesh(B)
