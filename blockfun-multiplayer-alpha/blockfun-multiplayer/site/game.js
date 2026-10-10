@@ -409,7 +409,7 @@ function tick(now){requestAnimationFrame(tick);const dt=Math.min(.045,(now-lastF
  gl.bindTexture(gl.TEXTURE_2D,atlas);if(playing)showPlayerTags(now,vp);
  if(net.connected&&now-lastNetSend>190){lastNetSend=now;send({t:'move',x:eye.x,y:eye.y,z:eye.z,yaw:eye.yaw,moving:!!(keys.KeyW||keys.KeyS||controls.joystick)})}
  frameCount++;if(now-fpsStart>1500){frameFps=Math.round(frameCount*1000/(now-fpsStart));$('fps').textContent=frameFps+' FPS';frameCount=0;fpsStart=now;if(playing&&frameFps<23&&quality>.7&&now-lastQualityChange>7000){quality=.70;resize();lastQualityChange=now;toast('Automatic FPS mode enabled')}}
- if(playing&&frameCount%20===0){const craftVisible=isNearCraft()&&!document.querySelector('.panel:not(.hidden)')&&$('spawnPopup').classList.contains('hidden');$('craftPrompt').hidden=!craftVisible;if(craftVisible)setContext('');else setContext(protectedZone(eye.x,eye.z)?'Safe 100x100 spawn · E inventory · T chat · 1-9 hotbar':'Wild zone · mine grass and dirt (2 layers)')}
+ if(playing&&frameCount%20===0){const craftVisible=isNearCraft()&&!document.querySelector('.panel:not(.hidden)')&&$('spawnPopup').classList.contains('hidden');$('craftPrompt').hidden=!craftVisible;if(craftVisible)setContext('Tap table · R or USE to craft');else setContext(protectedZone(eye.x,eye.z)?'Safe 100x100 spawn · E inventory · T chat · 1-9 hotbar':'Wild zone · mine grass and dirt (2 layers)')}
 }
 // Read-only diagnostics for testing collision and entry points.
 window.BLOCKFUN_DIAGNOSTICS={getPosition:()=>({x:eye.x,y:eye.y,z:eye.z}),blocked:(x,z,feet=eye.y-EYE_HEIGHT)=>intersectBody(x,feet,z),colliderCount:()=>solidBoxes.length};

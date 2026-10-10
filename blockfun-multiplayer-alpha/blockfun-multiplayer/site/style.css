@@ -215,6 +215,6 @@ html,body{background:#6a6a6a;color:#fff}
 #handOverlay.punch{animation:blockfun-punch-pc .18s ease-out!important}
 @keyframes blockfun-punch-pc{0%{transform:rotate(-34deg) translate(0,0)}45%{transform:rotate(-46deg) translate(-68px,-34px)}100%{transform:rotate(-34deg) translate(0,0)}}
 #contextHint:empty{display:none!important}
-#craftPrompt{bottom:142px!important}
-@media(max-width:600px){#handOverlay{width:98px!important;height:218px!important;right:7px!important;bottom:-56px!important;transform:rotate(-34deg)!important}#handOverlay::before{right:-18px;width:18px;top:8px}#handOverlay::after{top:-16px;height:16px;clip-path:polygon(0 100%,16px 0,100% 0,100% 100%)}#craftPrompt{bottom:118px!important}@keyframes blockfun-punch-pc{0%{transform:rotate(-34deg) translate(0,0)}45%{transform:rotate(-46deg) translate(-45px,-22px)}100%{transform:rotate(-34deg) translate(0,0)}}}
-@media(max-height:470px){#craftPrompt{bottom:88px!important}#contextHint{bottom:68px!important}}
+#craftPrompt{bottom:170px!important}
+@media(max-width:600px){#handOverlay{width:98px!important;height:218px!important;right:7px!important;bottom:-56px!important;transform:rotate(-34deg)!important}#handOverlay::before{right:-18px;width:18px;top:8px}#handOverlay::after{top:-16px;height:16px;clip-path:polygon(0 100%,16px 0,100% 0,100% 100%)}#craftPrompt{bottom:150px!important}@keyframes blockfun-punch-pc{0%{transform:rotate(-34deg) translate(0,0)}45%{transform:rotate(-46deg) translate(-45px,-22px)}100%{transform:rotate(-34deg) translate(0,0)}}}
+@media(max-height:470px){#craftPrompt{bottom:120px!important}#contextHint{bottom:68px!important}}
