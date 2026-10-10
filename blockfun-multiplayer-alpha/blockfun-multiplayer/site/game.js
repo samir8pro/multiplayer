@@ -312,7 +312,7 @@ const controls={forward:0,strafe:0,joystick:false};let touchId=null;
 const stick=$('joystick'),knob=$('knob');function stickMove(e){const r=stick.getBoundingClientRect();let x=e.clientX-(r.left+r.width/2),y=e.clientY-(r.top+r.height/2);let radius=r.width*.29,mag=Math.hypot(x,y);if(mag>radius){x*=radius/mag;y*=radius/mag}controls.forward=-y/radius;controls.strafe=x/radius;knob.style.transform=`translate(${x}px,${y}px)`}
 stick.onpointerdown=e=>{e.preventDefault();touchId=e.pointerId;controls.joystick=true;stick.setPointerCapture(touchId);stickMove(e)};stick.onpointermove=e=>{if(e.pointerId===touchId)stickMove(e)};function stickEnd(e){if(e.pointerId!==touchId)return;controls.joystick=false;controls.forward=controls.strafe=0;touchId=null;knob.style.transform='translate(0,0)'}stick.onpointerup=stickEnd;stick.onpointercancel=stickEnd;
 let punchReadyAt=0,punchTimer=0;
-function punchHand(){const hand=$('handOverlay'),cooldown=$('attackCooldown'),now=performance.now();if(!hand||!playing||now<punchReadyAt)return;punchReadyAt=now+420;clearTimeout(punchTimer);const skin=player.skin%skinPalettes.length;hand.src='./assets/skins/punch.gif?v='+Date.now();cooldown?.classList.remove('cooling');void hand.offsetWidth;cooldown?.classList.add('cooling');punchTimer=setTimeout(()=>{hand.src='./assets/skins/arm'+skin+'.png';cooldown?.classList.remove('cooling')},390)}
+function punchHand(){const hand=$('handOverlay'),cooldown=$('attackCooldown');if(!hand||!playing)return;clearTimeout(punchTimer);const skin=player.skin%skinPalettes.length;hand.src='./assets/skins/punch.gif?v='+Date.now();cooldown?.classList.remove('cooling');void hand.offsetWidth;cooldown?.classList.add('cooling');punchTimer=setTimeout(()=>{hand.src='./assets/skins/arm'+skin+'.png';cooldown?.classList.remove('cooling')},390)}
 let pointerUnlockUntil=0;
 document.addEventListener('pointerlockchange',()=>document.body.classList.toggle('pointer-locked',document.pointerLockElement===canvas));
 document.addEventListener('mousemove',e=>{if(!playing||typing||document.pointerLockElement!==canvas)return;eye.yaw-=e.movementX*.0028;eye.pitch=Math.max(-1.25,Math.min(1.25,eye.pitch-e.movementY*.0025))});
@@ -324,7 +324,7 @@ window.addEventListener('keydown',e=>{if(e.target instanceof HTMLInputElement||e
 $('jumpBtn').onpointerdown=e=>{e.preventDefault();keys.Space=true};$('jumpBtn').onpointerup=()=>keys.Space=false;$('jumpBtn').onpointercancel=()=>keys.Space=false;
 function syncUiCursor(){const open=!!document.querySelector('.panel:not(.hidden),.mcPopup:not(.hidden)');document.body.classList.toggle('ui-open',open);if(open){pointerUnlockUntil=performance.now()+500;for(const k in keys)keys[k]=false;controls.forward=controls.strafe=0;if(document.pointerLockElement)document.exitPointerLock?.()}}
 function toggle(id,open){for(const p of document.querySelectorAll('.panel'))if(p.id!==id)p.classList.add('hidden');const el=$(id),show=open??el.classList.contains('hidden');el.classList.toggle('hidden',!show);typing=show&&id==='chatPanel';syncUiCursor();if(typing)$('chatInput').focus();if(!show&&id==='craftPanel'&&playing&&matchMedia('(pointer:fine)').matches){pointerUnlockUntil=0;try{canvas.requestPointerLock?.()}catch{}}}
-for(const btn of document.querySelectorAll('[data-close]'))btn.onclick=()=>toggle(btn.dataset.close,false);
+for(const btn of document.querySelectorAll('[data-close]'))btn.onclick=()=>{const id=btn.dataset.close;toggle(id,false);if(id==='marketPanel')$(id).classList.remove('home-open')};
 $('chatBtn').onclick=()=>toggle('chatPanel');$('inventoryBtn').onclick=()=>toggle('inventoryPanel');$('menuBtn').onclick=()=>toggle('menuPanel');$('mineBtn').onclick=mine;$('placeBtn').onclick=place;$('useBtn').onclick=interact;$('stayBtn').onclick=()=>toggle('spawnPopup',false);
 $('chatForm').onsubmit=e=>{e.preventDefault();const t=$('chatInput').value.trim();if(!t)return;if(net.connected)send({t:'chat',text:t});else addChat(player.name,t);$('chatInput').value=''};
 $('respawnBtn').onclick=()=>{eye.x=0;eye.z=14;eye.y=EYE_HEIGHT;eye.vy=0;toggle('menuPanel',false);toast('Returned to spawn')};
@@ -392,7 +392,7 @@ $('craftButton').onclick=async()=>{
 };
 if(coinEndpoint)$('craftButton').textContent='CREATE REAL COIN';
 function openMarket(){
- const list=$('marketList');list.replaceChildren();const cs=readCraft().items;
+ const list=$('marketList');list.replaceChildren();const cs=[...readCraft().items].reverse();
  if(!cs.length)list.textContent='No coins created yet. Visit the crafting table.';
  for(const c of cs){
   const el=document.createElement('div');el.className='coinCard';
@@ -405,6 +405,7 @@ function openMarket(){
  }
  toggle('marketPanel',true)
 }
+const startMarket=$('startMarket');if(startMarket)startMarket.onclick=()=>{const market=$('marketPanel');market.classList.add('home-open');openMarket()};
 function start(){if(playing)return;playing=true;document.body.classList.add('playing');player.name=playerName($('nick').value);selectedSlot=0;selected=null;updatePreviewSkin();$('start').style.display='none';$('hud').hidden=false;send({t:'profile',name:player.name,skin:player.skin});toggle('spawnPopup',true);toast('E inventory · T chat · R use · Shift or double W to sprint');formatGrid()}
 formatGrid();updatePreviewSkin();
 window.BLOCKFUN_START=start;window.BLOCKFUN_READY=true;window.dispatchEvent(new Event('blockfun-ready'));
@@ -430,7 +431,7 @@ function tick(now){requestAnimationFrame(tick);const dt=Math.min(.045,(now-lastF
  updateChunks();const dir=rayForward(),moving=playing&&(keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD||Math.abs(controls.forward)+Math.abs(controls.strafe)>.07),camY=eye.y;const hand=$('handOverlay');if(hand){const uiOpen=!!document.querySelector('.panel:not(.hidden)');hand.style.opacity=playing&&!uiOpen?'1':'0';hand.style.visibility=playing&&!uiOpen?'visible':'hidden'}const vp=mul(persp(Math.PI*.40,canvas.width/canvas.height,.1,108),lookAt(eye.x,camY,eye.z,eye.x+dir.x,camY+dir.y,eye.z+dir.z));viewProj=vp;
  gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uni.vp,false,vp);gl.uniform3f(uni.eye,eye.x,eye.y,eye.z);gl.uniform3f(uni.sky,.55,.75,1);
  gl.bindTexture(gl.TEXTURE_2D,atlas);for(const m of chunks.values())drawMesh(m);drawMesh(spawnMesh);
- for(const p of remotes.values()){let t=Math.min(1,dt*9);p.x+=(p.targetX-p.x)*t;p.y+=(p.targetY-p.y)*t;p.z+=(p.targetZ-p.z)*t;if(Math.hypot(p.x-eye.x,p.z-eye.z)<1.65)continue;const phase=p.moving?Math.floor(now/105)%8:0,skin=((Number(p.skin)||0)%skinTextures.length+skinTextures.length)%skinTextures.length;gl.bindTexture(gl.TEXTURE_2D,skinTextures[skin]||atlas);drawMesh(getAvatarMesh(skin,phase),p.x,p.y-1.7,p.z,p.yaw||0)}
+ for(const p of remotes.values()){let t=Math.min(1,dt*9);p.x+=(p.targetX-p.x)*t;p.y+=(p.targetY-p.y)*t;p.z+=(p.targetZ-p.z)*t;if(Math.hypot(p.x-eye.x,p.z-eye.z)<2)continue;const phase=p.moving?Math.floor(now/105)%8:0,skin=((Number(p.skin)||0)%skinTextures.length+skinTextures.length)%skinTextures.length;gl.bindTexture(gl.TEXTURE_2D,skinTextures[skin]||atlas);drawMesh(getAvatarMesh(skin,phase),p.x,p.y-1.7,p.z,p.yaw||0)}
  gl.bindTexture(gl.TEXTURE_2D,atlas);if(playing)showPlayerTags(now,vp);
  if(net.connected&&now-lastNetSend>190){lastNetSend=now;send({t:'move',x:eye.x,y:eye.y,z:eye.z,yaw:eye.yaw,moving:!!(keys.KeyW||keys.KeyS||controls.joystick)})}
  frameCount++;if(now-fpsStart>1500){frameFps=Math.round(frameCount*1000/(now-fpsStart));$('fps').textContent=frameFps+' FPS';frameCount=0;fpsStart=now;if(playing&&frameFps<23&&quality>.7&&now-lastQualityChange>7000){quality=.70;resize();lastQualityChange=now;toast('Automatic FPS mode enabled')}}

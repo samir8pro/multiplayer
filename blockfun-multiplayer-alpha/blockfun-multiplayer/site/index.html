@@ -2,19 +2,21 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<title>BLOCKFUN — FINAL ENGLISH EDITION</title>
+<title>TWEETPUMP — Voxel Memecoin World</title>
 <meta name="description" content="A multiplayer voxel world inside a protected 100x100 spawn.">
-<meta name="twitter:card" content="player"><meta name="twitter:title" content="BLOCKFUN — Play in X"><meta name="twitter:description" content="Explore the protected BLOCKFUN spawn, build and chat — no signup.">
+<meta name="twitter:card" content="player"><meta name="twitter:title" content="TWEETPUMP — Play and Create"><meta name="twitter:description" content="Explore the protected BLOCKFUN spawn, build and chat — no signup.">
 <meta name="twitter:image" content="https://dynamic-klepon-d46485.netlify.app/preview.png"><meta name="twitter:player" content="https://dynamic-klepon-d46485.netlify.app/player.html?v=continuous-world-20261009"><meta name="twitter:player:width" content="800"><meta name="twitter:player:height" content="450">
 <link rel="stylesheet" href="style.css?v=final-skins-ui-20261010-16"><script defer src="config.js?v=final-skins-ui-20261010-16"></script><script defer src="boot.js?v=final-skins-ui-20261010-16"></script><script type="module" id="blockfunEngine" src="game.js?v=final-skins-ui-20261010-16"></script>
 </head><body>
 <canvas id="world" aria-label="BLOCKFUN voxel world"></canvas>
-<div id="start" class="overlay"><div class="startCard">
-  <div class="strap">BLOCKFUN  <span>TEXTURE PACK</span></div><div class="startIcon">BLOCK</div>
-  <h1>BLOCK<span>FUN</span></h1><p>Classic survival house · solid collisions · AZURYX textures · 100×100 spawn island.<br><small style="display:block;margin-top:8px">E = Inventory · T = Chat · 1–9 = Hotbar · R = Use · F = Mine</small></p>
-  <div class="entry"><label>Your name <input id="nick" maxlength="18" autocomplete="off" value="Miner" aria-label="Player name"></label><button id="play" type="button">PLAY NOW</button></div>
-  <div id="startStatus" role="status" aria-live="polite">Preparing 3D world...</div><button id="retryMotor" type="button" style="display:none;margin:10px auto 0;padding:10px 17px;background:#458b73;color:white;border:1px solid #90c9b3;border-radius:7px;cursor:pointer">RETRY LOAD</button>
-  <small>Protected spawn · Multiplayer · Creator access</small>
+<div id="start" class="overlay tweetpumpHome"><div class="startCard">
+  <div class="pumpBadge">VOXEL MEMECOIN WORLD</div>
+  <h1>TWEET<span>PUMP</span></h1>
+  <p class="homeTagline">Explore the spawn, meet players and create memecoins at the crafting table.</p>
+  <label class="homeName">PLAYER NAME<input id="nick" maxlength="18" autocomplete="off" value="Miner" aria-label="Player name"></label>
+  <div class="homeButtons"><button id="play" type="button">PLAY</button><button id="startMarket" type="button">LATEST CREATIONS</button></div>
+  <div id="startStatus" role="status" aria-live="polite">Preparing world...</div><button id="retryMotor" type="button" style="display:none;margin:10px auto 0;padding:10px 17px">RETRY LOAD</button>
+  <small>100×100 protected multiplayer spawn</small>
 </div></div>
 <div id="hud" hidden>
   <div class="topbar"><button class="miniBtn" id="menuBtn" aria-label="Menu">MENU</button><strong>BLOCKFUN</strong><span id="online">SOLO</span><span id="fps">FPS</span></div>
