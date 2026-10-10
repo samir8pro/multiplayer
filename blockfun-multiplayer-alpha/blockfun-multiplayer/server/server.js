@@ -8,7 +8,14 @@ import { Connection, Keypair, VersionedTransaction } from '@solana/web3.js';
 import bs58 from 'bs58';
 const PORT=Number(process.env.PORT||3000);
 const publicHost=process.env.RENDER_EXTERNAL_HOSTNAME||'multiplayer-xnqs.onrender.com';
-const allowed=new Set(['https://'+publicHost,'https://zippy-piroshki-e7d3fc.netlify.app','https://dynamic-klepon-d46485.netlify.app',...(process.env.ALLOWED_ORIGINS||'').split(',').map(s=>s.trim()).filter(Boolean)]);
+const allowed=new Set([
+ 'https://'+publicHost,
+ 'https://tweetpump.fun',
+ 'https://www.tweetpump.fun',
+ 'https://zippy-piroshki-e7d3fc.netlify.app',
+ 'https://dynamic-klepon-d46485.netlify.app',
+ ...(process.env.ALLOWED_ORIGINS||'').split(',').map(s=>s.trim().replace(/\/$/,'')).filter(Boolean)
+]);
 if(process.env.NODE_ENV!=='production'){allowed.add('http://localhost:'+PORT);allowed.add('http://127.0.0.1:'+PORT)}
 const site=fileURLToPath(new URL('../site/',import.meta.url));
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.png':'image/png','.json':'application/json'};

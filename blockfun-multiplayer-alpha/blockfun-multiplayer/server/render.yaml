@@ -8,4 +8,4 @@ services:
     startCommand: npm start
     envVars:
       - key: ALLOWED_ORIGINS
-        value: https://zippy-piroshki-e7d3fc.netlify.app
+        value: https://tweetpump.fun,https://www.tweetpump.fun
