@@ -46,9 +46,7 @@ const imageAtlas=new Image();
 imageAtlas.onload=()=>{
   gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,atlas);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,0);
-  // Keep the supplied pack for wood/stone, but guarantee a clearly green grass tile.
-  const packed=document.createElement('canvas');packed.width=packed.height=128;const pctx=packed.getContext('2d');pctx.imageSmoothingEnabled=false;pctx.drawImage(imageAtlas,0,0,128,128);pctx.fillStyle='#62a83f';pctx.fillRect(0,0,32,32);for(let i=0;i<42;i++){pctx.fillStyle=i%2?'#4d9136':'#82c955';pctx.fillRect((i*17)%31,(i*11)%31,2,2)}
-  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,packed);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,imageAtlas);
   gl.generateMipmap(gl.TEXTURE_2D);
   window.BLOCKFUN_AZURYX_LOADED=true;
 };
@@ -135,7 +133,7 @@ function tryMoveAxis(nx,nz){let feet=eye.y-EYE_HEIGHT;
  return false
 }
 // House / protected spawn geometry batched into a single WebGL draw.
-const seats=[];let seated=false;
+const seats=[];let seated=null;
 function constructSpawn(){let B=new Builder();
  const S=(x,y,z,sx,sy,sz,t)=>{B.box(x,y,z,sx,sy,sz,t);addSolid(x,y,z,sx,sy,sz)};
  const D=(x,y,z,sx,sy,sz,t)=>B.box(x,y,z,sx,sy,sz,t);
@@ -191,10 +189,10 @@ function constructSpawn(){let B=new Builder();
  // A 2-step walkable porch and oak-decorated inside, Minecraft-like crafting cabin.
  S(0,.28,-11.1,3.6,.40,1.7,4);
  C(0,1.34,-18.8); // crafting table with Minecraft-like top and side textures
- // Distinct chairs: seat, four legs and tall backrest. All parts are solid colliders.
+ // Four clear chairs: thin seat, four legs and a tall backrest.
  for(const [x,z,dx,dz] of [[-3,-18.8,-1,0],[3,-18.8,1,0],[0,-21.8,0,-1],[0,-15.8,0,1]]){
   S(x,1.00,z,1.2,.34,1.2,5);
-  for(const [lx,lz] of [[-.42,-.42],[.42,-.42],[-.42,.42],[.42,.42]])S(x+lx,0.78,z+lz,.16,.55,.16,5);
+  for(const [lx,lz] of [[-.42,-.42],[.42,-.42],[-.42,.42],[.42,.42]])S(x+lx,.69,z+lz,.16,.62,.16,5);
   S(x+dx*.43,1.72,z+dz*.43,1.02,1.5,.22,5);
   seats.push({x,z,top:1.17,dx,dz});
  }
@@ -331,16 +329,13 @@ function isLookingAtCraft(){
  }
  return true
 }
-function rayHitsBox(box){
- const dir=rayForward(),origin=[eye.x,eye.y,eye.z],v=[dir.x,dir.y,dir.z];let enter=.05,exit=6.5;
- for(let i=0;i<3;i++){if(Math.abs(v[i])<.00001){if(origin[i]<box[i][0]||origin[i]>box[i][1])return false;continue}let a=(box[i][0]-origin[i])/v[i],b=(box[i][1]-origin[i])/v[i];if(a>b)[a,b]=[b,a];enter=Math.max(enter,a);exit=Math.min(exit,b);if(exit<enter)return false}return true;
-}
-function lookedSeat(){let best=null;for(const s of seats){const d=Math.hypot(eye.x-s.x,eye.z-s.z);if(d<2.25&&rayHitsBox([[s.x-.75,s.x+.75],[.45,2.45],[s.z-.75,s.z+.75]])&&(!best||d<best.d))best={s,d}}return best}
+function rayHitsBox(box){const dir=rayForward(),origin=[eye.x,eye.y,eye.z],v=[dir.x,dir.y,dir.z];let enter=.05,exit=6.5;for(let i=0;i<3;i++){if(Math.abs(v[i])<.00001){if(origin[i]<box[i][0]||origin[i]>box[i][1])return false;continue}let a=(box[i][0]-origin[i])/v[i],b=(box[i][1]-origin[i])/v[i];if(a>b)[a,b]=[b,a];enter=Math.max(enter,a);exit=Math.min(exit,b);if(exit<enter)return false}return true}
+function lookedSeat(){let best=null;for(const s of seats){const d=Math.hypot(eye.x-s.x,eye.z-s.z);if(d<2.25&&rayHitsBox([[s.x-.75,s.x+.75],[.42,2.45],[s.z-.75,s.z+.75]])&&(!best||d<best.d))best={s,d}}return best}
+function leaveSeat(){const s=seated,candidates=[[s.x+s.dz*1.55,s.z-s.dx*1.55],[s.x-s.dz*1.55,s.z+s.dx*1.55],[s.x-s.dx*1.65,s.z-s.dz*1.65]];let spot=candidates.find(([x,z])=>!intersectBody(x,.86,z))||[0,14];const support=topSupport(spot[0],spot[1],2.1,-.2);eye.x=spot[0];eye.z=spot[1];eye.y=(Number.isFinite(support)?support:0)+EYE_HEIGHT+.03;eye.vy=0;eye.ground=true;seated=null;toast('Standing up')}
 function openCraft(){if(!playing)return;toggle('craftPanel',true);updateCraftLeft()}
 function interact(){
- const targetSeat=lookedSeat();
- if(seated){seated=false;eye.y=1.62;eye.vy=0;eye.ground=true;toast('Standing up');return}
- if(targetSeat){const s=targetSeat.s;seated=true;eye.x=s.x-s.dx*.28;eye.z=s.z-s.dz*.28;eye.y=s.top+.95;eye.vy=0;eye.ground=true;for(const k in keys)keys[k]=false;toast('Seated');return}
+ if(seated){leaveSeat();return}
+ const targetSeat=lookedSeat();if(targetSeat){seated=targetSeat.s;eye.x=seated.x-seated.dx*.24;eye.z=seated.z-seated.dz*.24;eye.y=seated.top+.95;eye.vy=0;eye.ground=true;for(const k in keys)keys[k]=false;toast('Seated');return}
  if(isNearCraft()&&isLookingAtCraft()){openCraft();return}
  if(Math.hypot(eye.x-24,eye.z-15)<5){openMarket();return}
  if(Math.hypot(eye.x-quarry.x,eye.z-quarry.z)<9){toast('Peaceful quarry: tap MINE to collect ore');return}
@@ -404,7 +399,7 @@ window.BLOCKFUN_START=start;window.BLOCKFUN_READY=true;window.dispatchEvent(new 
 function resize(){const w=window.innerWidth,h=window.innerHeight;canvas.width=Math.max(1,Math.round(w*quality));canvas.height=Math.max(1,Math.round(h*quality));canvas.style.width=w+'px';canvas.style.height=h+'px';gl.viewport(0,0,canvas.width,canvas.height)}resize();window.addEventListener('resize',resize);
 // Main loop: small viewport, ~25 chunk draw calls, no lighting shadows or trees.
 function tick(now){requestAnimationFrame(tick);const dt=Math.min(.045,(now-lastFrame)/1000);lastFrame=now;
- if(seated&&(keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD||keys.Space||controls.forward||controls.strafe)){seated=false;eye.y=1.62;eye.vy=0;eye.ground=true;toast('Standing up')}
+ if(seated&&(keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD||keys.Space||controls.forward||controls.strafe))leaveSeat();
  if(playing&&!typing){let f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)+controls.forward,s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+controls.strafe;let n=Math.max(1,Math.hypot(f,s)),speed=5.4*dt;let nx=eye.x+(-Math.sin(eye.yaw)*f+Math.cos(eye.yaw)*s)/n*speed,nz=eye.z+(-Math.cos(eye.yaw)*f-Math.sin(eye.yaw)*s)/n*speed;
  if(Math.abs(nx)<WORLD_HALF-1)tryMoveAxis(nx,eye.z);
  if(Math.abs(nz)<WORLD_HALF-1)tryMoveAxis(eye.x,nz);
@@ -419,9 +414,9 @@ function tick(now){requestAnimationFrame(tick);const dt=Math.min(.045,(now-lastF
   if(Number.isFinite(support)&&newFeet<=support&&oldFeet>=support-.11){newFeet=support;eye.vy=0;eye.ground=true}
   else eye.ground=false;
  }
- eye.y=seated?2.12:newFeet+EYE_HEIGHT;
+ eye.y=seated?seated.top+.95:newFeet+EYE_HEIGHT;
  if(eye.y<-2.1){eye.x=0;eye.z=14;eye.y=EYE_HEIGHT;eye.vy=0;eye.ground=true;toast('Returned to spawn · Peaceful mode')}}
- updateChunks();const dir=rayForward(),moving=playing&&(keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD||Math.abs(controls.forward)+Math.abs(controls.strafe)>.07),bob=(moving&&eye.ground)?Math.sin(now*.015)*.028:0,camY=eye.y+bob;const hand=$('handOverlay');if(hand){const swing=(moving&&eye.ground)?Math.sin(now*.017):0;const uiOpen=!!document.querySelector('.panel:not(.hidden)')||!$('spawnPopup').classList.contains('hidden');hand.style.opacity=playing&&!uiOpen?'1':'0';hand.style.transform='translate('+((moving?swing*9:0))+'px,'+((moving?Math.abs(swing)*11:0))+'px) rotate('+(moving?swing*5:0)+'deg)';}const vp=mul(persp(Math.PI*.40,canvas.width/canvas.height,.1,108),lookAt(eye.x,camY,eye.z,eye.x+dir.x,camY+dir.y,eye.z+dir.z));viewProj=vp;
+ updateChunks();const dir=rayForward(),moving=playing&&(keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD||Math.abs(controls.forward)+Math.abs(controls.strafe)>.07),camY=eye.y;const hand=$('handOverlay');if(hand){const uiOpen=!!document.querySelector('.panel:not(.hidden)')||!$('spawnPopup').classList.contains('hidden');hand.style.opacity=playing&&!uiOpen?'1':'0';hand.style.transform='none';}const vp=mul(persp(Math.PI*.40,canvas.width/canvas.height,.1,108),lookAt(eye.x,camY,eye.z,eye.x+dir.x,camY+dir.y,eye.z+dir.z));viewProj=vp;
  gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uni.vp,false,vp);gl.uniform3f(uni.eye,eye.x,eye.y,eye.z);gl.uniform3f(uni.sky,.55,.75,1);
  gl.bindTexture(gl.TEXTURE_2D,atlas);for(const m of chunks.values())drawMesh(m);drawMesh(spawnMesh);drawMesh(quarryMesh);
  for(const p of remotes.values()){let t=Math.min(1,dt*9);p.x+=(p.targetX-p.x)*t;p.y+=(p.targetY-p.y)*t;p.z+=(p.targetZ-p.z)*t;const phase=p.moving?Math.floor(now/105)%8:0;gl.bindTexture(gl.TEXTURE_2D,skinTextures[p.skin%6]||atlas);drawMesh(getAvatarMesh(p.skin||0,phase),p.x,p.y-1.7,p.z,p.yaw||0)}

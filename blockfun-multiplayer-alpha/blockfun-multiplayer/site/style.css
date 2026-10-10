@@ -198,12 +198,10 @@ html,body{background:#6a6a6a;color:#fff}
 .slot{border-radius:1px!important;background:#777!important;border:2px solid #2b2b2b!important;box-shadow:inset 2px 2px #bcbcbc,inset -2px -2px #4a4a4a!important}
 .slot.active{border:3px solid #ffd638!important;background:#989898!important;box-shadow:0 0 0 1px #171717,inset 1px 1px #dedede!important}
 @media(max-width:600px){#handOverlay{right:-2%!important;bottom:11%!important;width:clamp(120px,32vw,185px)!important}}
-/* TweetPump.fun final compact Minecraft-like inventory and hand. */
-#inventoryPanel .playerPreview{overflow:hidden!important;clip-path:inset(0)!important;min-height:0!important}
+/* TweetPump.fun: simple, fixed first-person arm matching the selected skin. */
+#handOverlay{width:clamp(90px,16vw,142px)!important;right:1%!important;bottom:5%!important;transform:none!important;filter:drop-shadow(4px 5px 0 rgba(0,0,0,.28))!important;transition:opacity .15s!important}
+#inventoryPanel .playerPreview{overflow:hidden!important;clip-path:inset(0)!important}
 #inventoryPanel .avatarHead,#inventoryPanel .avatarBody,#inventoryPanel .avatarLegs{transform:translateX(-50%) scale(.78)!important;transform-origin:top center!important}
 #inventoryPanel .avatarHead{top:5px!important}.playerPreview .avatarBody{top:43px!important}.playerPreview .avatarLegs{top:82px!important}
-#inventoryPanel .armorCol{position:relative;z-index:2;align-content:start!important;gap:5px!important}.armorSlot{width:27px!important;height:27px!important}
-#handOverlay{width:clamp(92px,17vw,150px)!important;right:-1%!important;bottom:6%!important;filter:drop-shadow(4px 5px 0 rgba(0,0,0,.28))!important;transition:transform .12s ease-out,opacity .15s!important}
-#handOverlay:not([style*="translate"]){transform:none!important}
-#hotbar .slotIcon{font-size:14px!important}
-@media(max-width:600px){#handOverlay{width:clamp(86px,23vw,130px)!important;right:-2%!important;bottom:10%!important}.invWrap{grid-template-columns:118px minmax(0,1fr)!important}.playerPreview{height:112px!important}}
+#inventoryPanel .armorCol{align-content:start!important;gap:5px!important;position:relative;z-index:2}.armorSlot{width:27px!important;height:27px!important}
+@media(max-width:600px){#handOverlay{width:clamp(82px,22vw,122px)!important;right:-1%!important;bottom:9%!important}.invWrap{grid-template-columns:118px minmax(0,1fr)!important}.playerPreview{height:112px!important}}
