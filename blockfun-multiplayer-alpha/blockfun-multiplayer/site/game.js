@@ -51,7 +51,7 @@ imageAtlas.onload=()=>{
   window.BLOCKFUN_AZURYX_LOADED=true;
 };
 imageAtlas.onerror=()=>{console.warn('AZURYX atlas unavailable; using procedural backup')};
-imageAtlas.src='./assets/azuryx-atlas.png';
+imageAtlas.src='./assets/blockfun-pack-atlas.png';
 // Unique blocky player skins (our own pixel textures), separate from the crafting table atlas.
 const skinTextures=new Array(6).fill(null);
 for(let si=0;si<6;si++){
@@ -148,8 +148,8 @@ function constructSpawn(){let B=new Builder();
  // Full stone safety border: 1 block high so players do not fall into the void outside the 100x100 spawn.
  for(let x=-49;x<=49;x++){S(x,.5,-49,1,1,1,8);S(x,.5,49,1,1,1,8);addSolid(x,.5,-49,1,1,1);addSolid(x,.5,49,1,1,1)}
  for(let z=-48;z<=48;z++){S(-49,.5,z,1,1,1,8);S(49,.5,z,1,1,1,8);addSolid(-49,.5,z,1,1,1);addSolid(49,.5,z,1,1,1)}
- for(let x=-49;x<=49;x++){D(x,1.48,-49,1,.92,.16,13.7);D(x,1.48,49,1,.92,.16,13.7)}
- for(let z=-48;z<=48;z++){D(-49,1.48,z,.16,.92,1,13.7);D(49,1.48,z,.16,.92,1,13.7)}
+ for(let x=-49;x<=49;x++){addSolid(x,1.55,-49,1,1.1,1);addSolid(x,1.55,49,1,1.1,1)}
+ for(let z=-48;z<=48;z++){addSolid(-49,1.55,z,1,1.1,1);addSolid(49,1.55,z,1,1.1,1)}
  // Cobblestone foundation and a step-up porch, both physically walkable.
  // Raised slightly and with an interior finish floor so grass never peeks through the walls.
  S(0,.18,-19,17,.36,15,8);
@@ -200,11 +200,6 @@ function constructSpawn(){let B=new Builder();
  for(const [x,z] of [[-6,-6],[6,-6],[-6,9],[6,9]]){S(x,1,z,.8,2,.8,5);D(x,2.33,z,1.1,.45,1.1,11)}
  // Block displays near house with the texture pack, without giant constructions.
  for(const [x,z,t] of [[-12,-12,8],[-14,-12,5],[12,-12,8],[14,-12,4]])S(x,.5,z,1,1,1,t);
- // Small portal using actual solid frame and non-solid animated-looking infill.
- D(24,.09,15,7,.16,7,8);
- for(let y=1;y<=5;y++){S(22,y-.5,15,1,1,1,3);S(26,y-.5,15,1,1,1,3)}
- for(let x=22;x<=26;x++){S(x,5.5,15,1,1,1,3);S(x,.50,15,1,1,1,3)}
- D(24,2.62,15,2.7,4,.2,13);
  // Simple stone plinth on the far path, visibly solid.
  S(-24,.32,15,7,.64,6,8); S(-24,.99,15,1.7,.7,1.7,11);
  return makeMesh(B)
@@ -221,10 +216,10 @@ function buildQuarry(){let B=new Builder();const first=!quarryStaticsAdded;
  rock(-23,2.5,62,9,.8,1,8);rock(-27,1,62,1,2,1,8);rock(-19,1,62,1,2,1,8);
  quarryStaticsAdded=true;return makeMesh(B)
 }
-let quarryMesh=buildQuarry();
+let quarryMesh=null;
 function playerName(n){return String(n||'Miner').replace(/[^\p{L}\p{N} _.-]/gu,'').slice(0,18)||'Miner'}
 function formatGrid(){
- const labels={grass:['▧','Grass'],dirt:['▣','Dirt'],stone:['▦','Stone'],ore:['◆','Ore']};
+ const labels={grass:['G','Grass'],dirt:['D','Dirt'],stone:['S','Stone'],ore:['O','Ore']};
  const bar=$('hotbar'),invGrid=$('inventoryGrid'),invBar=$('inventoryHotbar');
  bar.replaceChildren();invGrid.replaceChildren();invBar.replaceChildren();
  const renderSlot=(key,i,forInventory)=>{
@@ -290,15 +285,15 @@ function showPlayerTags(now,vp){
   tag.style.display='block';tag.style.left=((sx+.999)/2*innerWidth)+'px';tag.style.top=((1-sy)/2*innerHeight)+'px';
  }
 }
-function connect(){let u=window.BLOCKFUN_WS_URL;if(!u||!u.startsWith('wss://')){$('online').textContent='● SERVER NOT SET';return;}let ws;try{ws=new WebSocket(u)}catch{return}net.ws=ws;$('online').textContent='◌ CONNECTING';ws.onopen=()=>{if(net.ws!==ws)return;net.connected=true;net.retry=0;$('online').textContent='● ONLINE';ws.send(JSON.stringify({t:'profile',name:player.name,skin:player.skin}))};ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch{return}
- if(m.t==='hello'){net.id=m.id;remotes.clear();for(const p of (m.players||[]))if(p.id!==net.id)remotes.set(p.id,{...p,targetX:p.x,targetY:p.y,targetZ:p.z,at:performance.now()});$('online').textContent=`● ${remotes.size+1} ONLINE`;for(const q of (m.history||[]))addChat(q.name,q.text)}
- if(m.t==='join'&&m.id!==net.id){remotes.set(m.id,{...m,targetX:m.x,targetY:m.y,targetZ:m.z,at:performance.now()});$('online').textContent=`● ${remotes.size+1} ONLINE`}
+function connect(){let u=window.BLOCKFUN_WS_URL;if(!u||!u.startsWith('wss://')){$('online').textContent='SERVER NOT SET';return;}let ws;try{ws=new WebSocket(u)}catch{return}net.ws=ws;$('online').textContent='CONNECTING';ws.onopen=()=>{if(net.ws!==ws)return;net.connected=true;net.retry=0;$('online').textContent='ONLINE';ws.send(JSON.stringify({t:'profile',name:player.name,skin:player.skin}))};ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch{return}
+ if(m.t==='hello'){net.id=m.id;remotes.clear();for(const p of (m.players||[]))if(p.id!==net.id)remotes.set(p.id,{...p,targetX:p.x,targetY:p.y,targetZ:p.z,at:performance.now()});$('online').textContent=`${remotes.size+1} ONLINE`;for(const q of (m.history||[]))addChat(q.name,q.text)}
+ if(m.t==='join'&&m.id!==net.id){remotes.set(m.id,{...m,targetX:m.x,targetY:m.y,targetZ:m.z,at:performance.now()});$('online').textContent=`${remotes.size+1} ONLINE`}
  if(m.t==='move'&&remotes.has(m.id)){let p=remotes.get(m.id);p.targetX=m.x;p.targetY=m.y;p.targetZ=m.z;p.yaw=m.yaw;p.moving=m.moving}
  if(m.t==='profile'&&remotes.has(m.id)){let p=remotes.get(m.id);p.name=m.name||p.name;p.skin=m.skin??p.skin}
- if(m.t==='leave'){remotes.delete(m.id);$('online').textContent=`● ${remotes.size+1} ONLINE`}
+ if(m.t==='leave'){remotes.delete(m.id);$('online').textContent=`${remotes.size+1} ONLINE`}
  if(m.t==='chat')addChat(m.name||'Guest',m.text||'');
  if(m.t==='patch'&&Number.isFinite(m.x)&&Number.isFinite(m.z)&&(Math.abs(m.x)>=50||Math.abs(m.z)>=50)){if(m.action==='break'){dig.set(cellKey(m.x,m.z),m.y===0?1:2);rebuildAroundCell(m.x,m.z)}else if(m.action==='place'){if(m.y===0)dig.delete(cellKey(m.x,m.z));else dig.set(cellKey(m.x,m.z),1);rebuildAroundCell(m.x,m.z)}}
- };ws.onclose=()=>{if(net.ws!==ws)return;net.connected=false;$('online').textContent='● OFFLINE';remotes.clear();net.retry++;setTimeout(connect,Math.min(12000,3000+net.retry*750))};ws.onerror=()=>{if(net.ws===ws&&!net.connected)$('online').textContent='◌ RETRYING';};}
+ };ws.onclose=()=>{if(net.ws!==ws)return;net.connected=false;$('online').textContent='OFFLINE';remotes.clear();net.retry++;setTimeout(connect,Math.min(12000,3000+net.retry*750))};ws.onerror=()=>{if(net.ws===ws&&!net.connected)$('online').textContent='RETRYING';};}
 connect();
 window.addEventListener('online',()=>{if(!net.connected && (!net.ws || net.ws.readyState!==WebSocket.CONNECTING))connect()});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden && !net.connected && (!net.ws || net.ws.readyState!==WebSocket.CONNECTING))connect()});
@@ -338,8 +333,6 @@ function interact(){
  if(seated){leaveSeat();return}
  const targetSeat=lookedSeat();if(targetSeat){seated=targetSeat.s;eye.x=seated.x-seated.dx*.18;eye.z=seated.z-seated.dz*.18;eye.y=seated.top+.95;eye.vy=0;eye.ground=true;for(const k in keys)keys[k]=false;toast('Seated');return}
  if(isNearCraft()&&isLookingAtCraft()){openCraft();return}
- if(Math.hypot(eye.x-24,eye.z-15)<5){openMarket();return}
- if(Math.hypot(eye.x-quarry.x,eye.z-quarry.z)<9){toast('Peaceful quarry: tap MINE to collect ore');return}
  toast('Walk into the house. Use R or tap the table to craft.')
 }
 $('craftPrompt').onclick=openCraft;
@@ -415,15 +408,15 @@ function tick(now){requestAnimationFrame(tick);const dt=Math.min(.045,(now-lastF
   else eye.ground=false;
  }
  eye.y=newFeet+EYE_HEIGHT;
- if(eye.y<-2.1){eye.x=0;eye.z=14;eye.y=EYE_HEIGHT;eye.vy=0;eye.ground=true;toast('Returned to spawn · Peaceful mode')}}}
+ if(eye.y<-2.1){eye.x=0;eye.z=14;eye.y=EYE_HEIGHT;eye.vy=0;eye.ground=true;toast('Returned to spawn · Protected spawn')}}}
  updateChunks();const dir=rayForward(),moving=playing&&(keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD||Math.abs(controls.forward)+Math.abs(controls.strafe)>.07),camY=eye.y;const hand=$('handOverlay');if(hand){const uiOpen=!!document.querySelector('.panel:not(.hidden)')||!$('spawnPopup').classList.contains('hidden');hand.style.opacity=playing&&!uiOpen?'1':'0'}const vp=mul(persp(Math.PI*.40,canvas.width/canvas.height,.1,108),lookAt(eye.x,camY,eye.z,eye.x+dir.x,camY+dir.y,eye.z+dir.z));viewProj=vp;
  gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uni.vp,false,vp);gl.uniform3f(uni.eye,eye.x,eye.y,eye.z);gl.uniform3f(uni.sky,.55,.75,1);
- gl.bindTexture(gl.TEXTURE_2D,atlas);for(const m of chunks.values())drawMesh(m);drawMesh(spawnMesh);drawMesh(quarryMesh);
+ gl.bindTexture(gl.TEXTURE_2D,atlas);for(const m of chunks.values())drawMesh(m);drawMesh(spawnMesh);
  for(const p of remotes.values()){let t=Math.min(1,dt*9);p.x+=(p.targetX-p.x)*t;p.y+=(p.targetY-p.y)*t;p.z+=(p.targetZ-p.z)*t;const phase=p.moving?Math.floor(now/105)%8:0;gl.bindTexture(gl.TEXTURE_2D,skinTextures[p.skin%6]||atlas);drawMesh(getAvatarMesh(p.skin||0,phase),p.x,p.y-1.7,p.z,p.yaw||0)}
  gl.bindTexture(gl.TEXTURE_2D,atlas);if(playing)showPlayerTags(now,vp);
  if(net.connected&&now-lastNetSend>190){lastNetSend=now;send({t:'move',x:eye.x,y:eye.y,z:eye.z,yaw:eye.yaw,moving:!!(keys.KeyW||keys.KeyS||controls.joystick)})}
  frameCount++;if(now-fpsStart>1500){frameFps=Math.round(frameCount*1000/(now-fpsStart));$('fps').textContent=frameFps+' FPS';frameCount=0;fpsStart=now;if(playing&&frameFps<23&&quality>.7&&now-lastQualityChange>7000){quality=.70;resize();lastQualityChange=now;toast('Automatic FPS mode enabled')}}
- if(playing&&frameCount%20===0){$('craftPrompt').hidden=!isNearCraft()||!!document.querySelector('.panel:not(.hidden)')||!$('spawnPopup').classList.contains('hidden');if(isNearCraft())setContext('Tap table · R or USE to craft');else if(Math.hypot(eye.x-24,eye.z-15)<5)setContext('Press USE near the Block Market portal');else if(Math.hypot(eye.x-quarry.x,eye.z-quarry.z)<9)setContext('Peaceful quarry: collect resources outside the spawn');else setContext(protectedZone(eye.x,eye.z)?'Safe 100x100 spawn · E inventory · T chat · 1-9 hotbar':'Wild zone · mine grass and dirt (2 layers)')}
+ if(playing&&frameCount%20===0){$('craftPrompt').hidden=!isNearCraft()||!!document.querySelector('.panel:not(.hidden)')||!$('spawnPopup').classList.contains('hidden');if(isNearCraft())setContext('Tap table · R or USE to craft');else setContext(protectedZone(eye.x,eye.z)?'Safe 100x100 spawn · E inventory · T chat · 1-9 hotbar':'Wild zone · mine grass and dirt (2 layers)')}
 }
 // Read-only diagnostics for testing collision and entry points.
 window.BLOCKFUN_DIAGNOSTICS={getPosition:()=>({x:eye.x,y:eye.y,z:eye.z}),blocked:(x,z,feet=eye.y-EYE_HEIGHT)=>intersectBody(x,feet,z),colliderCount:()=>solidBoxes.length};
