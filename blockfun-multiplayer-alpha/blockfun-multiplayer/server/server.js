@@ -27,7 +27,7 @@ async function createCoin(req,res){
  const creator=creatorWallet();if(!creator)return json(res,503,{error:'Creator wallet is not configured'});
  const mint=Keypair.generate(),origin='https://'+publicHost,metadataUrl=new URL('/api/token-metadata',origin);for(const [k,v] of Object.entries({name,symbol,description,website,twitter}))if(v)metadataUrl.searchParams.set(k,v);
  try{
-  const built=await fetch('https://pumpportal.fun/api/trade-local',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({publicKey:creator.publicKey.toBase58(),action:'create',tokenMetadata:{name,symbol,uri:metadataUrl.href},mint:mint.publicKey.toBase58(),denominatedInSol:'true',amount:.0001,slippage:10,priorityFee:.00001,pool:'pump'})});
+  const built=await fetch('https://pumpportal.fun/api/trade-local',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({publicKey:creator.publicKey.toBase58(),action:'create',tokenMetadata:{name,symbol,uri:metadataUrl.href},mint:mint.publicKey.toBase58(),denominatedInSol:'true',amount:0,slippage:1,priorityFee:0,pool:'pump'})});
   if(!built.ok)throw Error('Transaction builder rejected: '+await built.text());
   const tx=VersionedTransaction.deserialize(new Uint8Array(await built.arrayBuffer()));tx.sign([mint,creator]);
   const connection=new Connection(process.env.SOLANA_RPC_URL||'https://api.mainnet-beta.solana.com','confirmed'),signature=await connection.sendTransaction(tx,{maxRetries:3});await connection.confirmTransaction(signature,'confirmed');
@@ -38,7 +38,7 @@ const server=http.createServer(async(req,res)=>{
  const requestUrl=new URL(req.url,'http://localhost'),path=requestUrl.pathname;
  if(req.method==='POST'&&path==='/api/coins')return createCoin(req,res);
  if(req.method!=='GET'&&req.method!=='HEAD'){res.writeHead(405);res.end();return}
- if(path==='/api/creator-wallet'){const wallet=creatorWallet();return json(res,wallet?200:503,wallet?{address:wallet.publicKey.toBase58(),network:'solana-mainnet',recommendedFundingSol:.03}:{error:'Wallet not configured'})}
+ if(path==='/api/creator-wallet'){const wallet=creatorWallet();return json(res,wallet?200:503,wallet?{address:wallet.publicKey.toBase58(),network:'solana-mainnet',estimatedMinimumSol:.006,recommendedFundingSol:.007,devBuySol:0,priorityFeeSol:0}:{error:'Wallet not configured'})}
  if(path==='/api/token-metadata'){const q=requestUrl.searchParams;return json(res,200,{name:clean(q.get('name'),32),symbol:clean(q.get('symbol'),10),description:clean(q.get('description'),240),image:'https://'+publicHost+'/preview.png',external_url:clean(q.get('website'),120),twitter:clean(q.get('twitter'),60),createdOn:'TweetPump.fun'})}
  if(path==='/health'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify({service:'BLOCKFUN',version:'0.4.0',online:players.size,ok:true}));return}
  let filename;try{filename=resolve(site,'.'+decodeURIComponent(path==='/'?'/index.html':path))}catch{res.writeHead(400);res.end();return}
