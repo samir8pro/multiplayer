@@ -51,7 +51,7 @@ imageAtlas.onload=()=>{
   window.BLOCKFUN_AZURYX_LOADED=true;
 };
 imageAtlas.onerror=()=>{console.warn('AZURYX atlas unavailable; using procedural backup')};
-imageAtlas.src='./assets/blockfun-pack-atlas.png?v=green-world-20261010-9';
+imageAtlas.src='./assets/blockfun-pack-atlas.png?v=green-world-20261010-10';
 // Unique blocky player skins (our own pixel textures), separate from the crafting table atlas.
 const skinTextures=new Array(6).fill(null);
 for(let si=0;si<6;si++){
