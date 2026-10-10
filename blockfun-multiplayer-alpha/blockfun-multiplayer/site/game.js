@@ -1,6 +1,6 @@
 try {
 // BLOCKFUN V7 — dependency-free WebGL1 voxel engine.
-// Only two terrain block layers (grass and dirt), chunk meshes, peaceful mode.
+// Protected 100x100 spawn, chunk meshes and original block textures.
 const $ = id => document.getElementById(id);
 const canvas=$('world');
 const gl=(canvas.getContext('webgl',{antialias:false,alpha:false,depth:true,powerPreference:'low-power',preserveDrawingBuffer:false}) || canvas.getContext('webgl',{antialias:false,alpha:false,depth:true}) || canvas.getContext('experimental-webgl'));
@@ -205,18 +205,6 @@ function constructSpawn(){let B=new Builder();
  return makeMesh(B)
 }
 const spawnMesh=constructSpawn();
-const quarry={x:-23,z:69};
-const oreNodes=[[-27,67,10],[-20,70,11],[-25,72,12],[-18,66,10],[-22,65,11]].map(([x,z,t])=>({x,z,t,alive:true,collider:null}));
-let quarryStaticsAdded=false;
-function buildQuarry(){let B=new Builder();const first=!quarryStaticsAdded;
- function rock(x,y,z,sx,sy,sz,t=3){B.box(x,y,z,sx,sy,sz,t);if(first)addSolid(x,y,z,sx,sy,sz)}
- B.box(-23,.09,69,12,.18,12,9);
- for(let z=65;z<=73;z+=2)for(let x=-28;x<=-18;x+=2)if((x+z)%3===0)rock(x,.46,z,1,.9,1);
- for(const node of oreNodes)if(node.alive){B.box(node.x,1.25,node.z,1.2,1.5,1.2,node.t);if(!node.collider)node.collider=addSolid(node.x,1.25,node.z,1.2,1.5,1.2)}
- rock(-23,2.5,62,9,.8,1,8);rock(-27,1,62,1,2,1,8);rock(-19,1,62,1,2,1,8);
- quarryStaticsAdded=true;return makeMesh(B)
-}
-let quarryMesh=null;
 function playerName(n){return String(n||'Miner').replace(/[^\p{L}\p{N} _.-]/gu,'').slice(0,18)||'Miner'}
 function formatGrid(){
  const labels={grass:['G','Grass'],dirt:['D','Dirt'],stone:['S','Stone'],ore:['O','Ore']};
@@ -313,7 +301,7 @@ $('respawnBtn').onclick=()=>{eye.x=0;eye.z=14;eye.y=EYE_HEIGHT;eye.vy=0;toggle('
 $('qualityBtn').onclick=()=>{quality=quality>.9?.72:1;resize();$('qualityBtn').textContent='Graphics: '+(quality<.9?'Max FPS':'Normal')};
 function protectedZone(x,z){return Math.abs(x)<SAFE_HALF&&Math.abs(z)<SAFE_HALF}
 function groundTarget(){let dir=rayForward(),best=null;for(let t=.7;t<5.5;t+=.22){let x=eye.x+dir.x*t,y=eye.y+dir.y*t,z=eye.z+dir.z*t,ix=Math.floor(x),iz=Math.floor(z),h=topAt(x,z);if(h>-2&&y<=h+.12){best={x:ix,z:iz,h};break}}if(!best){let x=eye.x+dir.x*2.8,z=eye.z+dir.z*2.8;best={x:Math.floor(x),z:Math.floor(z),h:topAt(x,z)}}return best}
-function mine(){if(!playing)return;let nearby=oreNodes.find(p=>p.alive&&Math.hypot(p.x-eye.x,p.z-eye.z)<4);if(nearby){nearby.alive=false;if(nearby.collider)nearby.collider.active=false;release(quarryMesh);quarryMesh=buildQuarry();inv.ore++;formatGrid();toast('Ore collected (+1)');return}const t=groundTarget();if(protectedZone(t.x,t.z)){toast('Protected spawn: you cannot break blocks here');return}if(Math.abs(t.x)>=500||Math.abs(t.z)>=500)return;let s=state(t.x,t.z);if(s===0){dig.set(cellKey(t.x,t.z),1);inv.grass++;toast('+1 grass block')}else if(s===1){dig.set(cellKey(t.x,t.z),2);inv.dirt++;toast('+1 dirt block · you reached the bottom layer (2 layers)')}else{toast('There are no more layers to mine here');return}formatGrid();rebuildAroundCell(t.x,t.z);send({t:'edit',action:'break',x:t.x,y:s===0?0:-1,z:t.z,block:s===0?'grass':'dirt'})}
+function mine(){if(!playing)return;const t=groundTarget();if(protectedZone(t.x,t.z)){toast('Protected spawn: you cannot break blocks here');return}if(Math.abs(t.x)>=500||Math.abs(t.z)>=500)return;let s=state(t.x,t.z);if(s===0){dig.set(cellKey(t.x,t.z),1);inv.grass++;toast('+1 grass block')}else if(s===1){dig.set(cellKey(t.x,t.z),2);inv.dirt++;toast('+1 dirt block · you reached the bottom layer (2 layers)')}else{toast('There are no more layers to mine here');return}formatGrid();rebuildAroundCell(t.x,t.z);send({t:'edit',action:'break',x:t.x,y:s===0?0:-1,z:t.z,block:s===0?'grass':'dirt'})}
 function place(){if(!playing)return;const t=groundTarget();if(protectedZone(t.x,t.z)){toast('Protected spawn');return}if(!selected){toast('Select a hotbar slot first');return}if(!['grass','dirt'].includes(selected)){toast('You can only place dirt and grass');return}if(inv[selected]<1){toast('You do not have any '+selected+' blocks');return}let s=state(t.x,t.z);if(s===2){dig.set(cellKey(t.x,t.z),1)}else if(s===1){dig.delete(cellKey(t.x,t.z))}else{toast('This ground already has 2 layers');return}inv[selected]--;formatGrid();rebuildAroundCell(t.x,t.z);toast('Block placed');send({t:'edit',action:'place',x:t.x,y:s===2?-1:0,z:t.z,block:selected})}
 function isNearCraft(){return Math.hypot(eye.x,eye.z+18.8)<7.4}
 function isLookingAtCraft(){
