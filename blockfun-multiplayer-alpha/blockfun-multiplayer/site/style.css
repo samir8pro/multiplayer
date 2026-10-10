@@ -243,3 +243,9 @@ body.playing #world{cursor:none}
 #attackCooldown.cooling i{animation:blockfun-cooldown .42s linear both}
 @keyframes blockfun-cooldown{0%{transform:scaleX(0)}100%{transform:scaleX(1)}}
 @media(max-width:600px){#handOverlay{width:132px!important;height:292px!important;right:-2px!important;bottom:-44px!important}@keyframes blockfun-reference-punch{0%{translate:0 0;scale:1}24%{translate:-52px 56px;scale:.91}48%{translate:-30px 31px;scale:.95}100%{translate:0 0;scale:1}}#attackCooldown{top:calc(50% + 23px);width:36px}}
+
+
+/* Supplied first-person arm: real PNG, always visible during gameplay. */
+#handOverlay{position:fixed!important;display:block!important;width:clamp(205px,28vw,330px)!important;height:auto!important;right:-8px!important;bottom:18px!important;background:none!important;border:0!important;clip-path:none!important;box-shadow:none!important;filter:drop-shadow(7px 9px 0 #0004)!important;object-fit:contain!important;image-rendering:auto!important;transform:none!important;translate:0 0!important;scale:1!important;z-index:24!important;pointer-events:none!important;opacity:0}
+#handOverlay::before,#handOverlay::after{content:none!important;display:none!important}
+@media(max-width:600px){#handOverlay{width:clamp(170px,39vw,230px)!important;right:-10px!important;bottom:70px!important}}
