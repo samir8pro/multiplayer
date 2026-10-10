@@ -18,13 +18,13 @@ function toast(message){$('toast').textContent=message;$('toast').style.opacity=
 function setContext(t){$('contextHint').textContent=t}
 // --- GLSL shader: one atlas, instanced-looking batch of exposed faces.
 const vs=`attribute vec3 aP; attribute vec2 aUV; attribute float aTile; attribute float aShade; uniform mat4 uVP; uniform vec3 uOffset; uniform float uYaw; varying vec2 vUV; varying float vTile; varying float vShade; varying vec3 vPos; void main(){float c=cos(uYaw),s=sin(uYaw);vec3 p=vec3(c*aP.x+s*aP.z,aP.y,-s*aP.x+c*aP.z)+uOffset;vPos=p;vUV=aUV;vTile=aTile;vShade=aShade;gl_Position=uVP*vec4(p,1.);}`;
-const fs=`precision mediump float; varying vec2 vUV; varying float vTile; varying float vShade; varying vec3 vPos; uniform sampler2D uAtlas; uniform vec3 uEye; uniform vec3 uSky; void main(){float t=floor(vTile+.1);vec2 at=vec2(mod(t,4.),floor(t/4.));vec2 uv=(at+mix(vec2(.012),vec2(.988),fract(vUV)))/4.;vec3 color=texture2D(uAtlas,uv).rgb*vShade;float glass=step(13.55,vTile)*step(vTile,13.95);color=mix(color,vec3(.9,.05,.08)*vShade,glass*.82);float dist=distance(uEye,vPos);float fog=clamp((dist-41.)/24.,0.,1.);gl_FragColor=vec4(mix(color,uSky,fog),mix(1.,.38,glass));}`;
+const fs=`precision mediump float; varying vec2 vUV; varying float vTile; varying float vShade; varying vec3 vPos; uniform sampler2D uAtlas; uniform vec3 uEye; uniform vec3 uSky; void main(){float t=floor(vTile+.1);vec2 at=vec2(mod(t,4.),7.-floor(t/4.));vec2 uv=(at+mix(vec2(.012),vec2(.988),fract(vUV)))/vec2(4.,8.);vec4 texel=texture2D(uAtlas,uv);float plant=step(15.5,t);if(plant>.5&&texel.a<.12)discard;vec3 color=texel.rgb*vShade;float glass=step(13.55,vTile)*step(vTile,13.95);color=mix(color,vec3(.9,.05,.08)*vShade,glass*.82);float dist=distance(uEye,vPos);float fog=clamp((dist-41.)/24.,0.,1.);float alpha=mix(mix(1.,.38,glass),texel.a,plant);gl_FragColor=vec4(mix(color,uSky,fog),alpha);}`;
 function shader(type,src){let s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s}
 let program=gl.createProgram();gl.attachShader(program,shader(gl.VERTEX_SHADER,vs));gl.attachShader(program,shader(gl.FRAGMENT_SHADER,fs));gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));gl.useProgram(program);
 const attr={p:gl.getAttribLocation(program,'aP'),uv:gl.getAttribLocation(program,'aUV'),tile:gl.getAttribLocation(program,'aTile'),shade:gl.getAttribLocation(program,'aShade')};
 const uni={vp:gl.getUniformLocation(program,'uVP'),offset:gl.getUniformLocation(program,'uOffset'),yaw:gl.getUniformLocation(program,'uYaw'),eye:gl.getUniformLocation(program,'uEye'),sky:gl.getUniformLocation(program,'uSky'),atlas:gl.getUniformLocation(program,'uAtlas')};
 gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.disable(gl.CULL_FACE);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.clearColor(.55,.75,1,1);
-function makeAtlas(){const c=document.createElement('canvas');c.width=c.height=128;const ctx=c.getContext('2d');let seed=176382;const rnd=()=>{seed=(Math.imul(1664525,seed)+1013904223)|0;return (seed>>>0)/4294967296};
+function makeAtlas(){const c=document.createElement('canvas');c.width=128;c.height=256;const ctx=c.getContext('2d');let seed=176382;const rnd=()=>{seed=(Math.imul(1664525,seed)+1013904223)|0;return (seed>>>0)/4294967296};
  const bg=['#6da94c','#8e643f','#845d3b','#7b858e','#ad8253','#806044','#9a573e','#94d3ed','#9aa5ae','#a98b63','#686a6a','#80848a','#92918a','#734cc1','#e2b48e','#bb884c'];
  for(let t=0;t<16;t++){let ox=(t%4)*32,oy=Math.floor(t/4)*32;ctx.fillStyle=bg[t];ctx.fillRect(ox,oy,32,32);for(let j=0;j<140;j++){let x=ox+(rnd()*32|0),y=oy+(rnd()*32|0);const shades=t===0?['#5e9743','#80bb59','#74ae51','#95c66a']:t===1||t===2?['#6d4b31','#a87a4b','#795137']:t===6?['#ab674b','#81422f','#ba7854']:['#ffffff24','#00000026','#ffffff12'];ctx.fillStyle=shades[j%shades.length];ctx.fillRect(x,y,1+(rnd()*3|0),1+(rnd()*3|0))}
  if(t===1){ctx.fillStyle='#66ab47';ctx.fillRect(ox,oy,32,7);for(let i=0;i<26;i++){ctx.fillStyle=i%2?'#599b3e':'#8cc961';ctx.fillRect(ox+(rnd()*32|0),oy+(rnd()*8|0),2,2)}}
@@ -51,7 +51,7 @@ imageAtlas.onload=()=>{
   window.BLOCKFUN_AZURYX_LOADED=true;
 };
 imageAtlas.onerror=()=>{console.warn('AZURYX atlas unavailable; using procedural backup')};
-imageAtlas.src='./assets/blockfun-pack-atlas.png';
+imageAtlas.src='./assets/blockfun-pack-atlas.png?v=green-world-20261010-9';
 // Unique blocky player skins (our own pixel textures), separate from the crafting table atlas.
 const skinTextures=new Array(6).fill(null);
 for(let si=0;si<6;si++){
@@ -137,6 +137,8 @@ const seats=[];let seated=null;
 function constructSpawn(){let B=new Builder();
  const S=(x,y,z,sx,sy,sz,t)=>{B.box(x,y,z,sx,sy,sz,t);addSolid(x,y,z,sx,sy,sz)};
  const D=(x,y,z,sx,sy,sz,t)=>B.box(x,y,z,sx,sy,sz,t);
+ const G=(x,y,z,sx,sy,sz)=>{B.box6(x,y,z,sx,sy,sz,0,2,1,1,1,1);addSolid(x,y,z,sx,sy,sz)};
+ const P=(x,z,t,h=.9,w=.82)=>{const y=.045,u=[[0,0],[1,0],[1,1],[0,1]];B.quad([[x-w/2,y,z-w/2],[x+w/2,y,z+w/2],[x+w/2,y+h,z+w/2],[x-w/2,y+h,z-w/2]],u,t,1);B.quad([[x+w/2,y,z-w/2],[x-w/2,y,z+w/2],[x-w/2,y+h,z+w/2],[x+w/2,y+h,z-w/2]],u,t,.92)};
  const C=(x,y,z)=>{B.box6(x,y,z,1,1,1,15,5,14,14,14,14);addSolid(x,y,z,1,1,1)};
  // Minecraft survival aesthetic: one real cottage, stone paths, low fence and four corner lamps.
  // Path tiles are decorative only and never create invisible collision walls.
@@ -200,6 +202,9 @@ function constructSpawn(){let B=new Builder();
  for(const [x,z] of [[-6,-6],[6,-6],[-6,9],[6,9]]){S(x,1,z,.8,2,.8,5);D(x,2.33,z,1.1,.45,1.1,11)}
  // Block displays near house with the texture pack, without giant constructions.
  for(const [x,z,t] of [[-12,-12,8],[-14,-12,5],[12,-12,8],[14,-12,4]])S(x,.5,z,1,1,1,t);
+ // Texture-pack garden: crossed transparent flowers/tall grass plus chunky grass blocks.
+ for(const [x,z,t] of [[-13,2,16],[-10,7,17],[-15,11,18],[-9,15,16],[-17,19,17],[13,2,18],[10,7,16],[15,11,17],[9,15,18],[17,19,16],[-31,-5,18],[-34,1,16],[31,-5,17],[34,1,18]])P(x,z,t,t===18?1.05:.88,t===18?.96:.78);
+ for(const [x,z,s] of [[-21,22,1.8],[-24,24,1.25],[22,23,1.8],[25,21,1.25]])G(x,s*.42,z,s,s*.84,s);
  // Simple stone plinth on the far path, visibly solid.
  S(-24,.32,15,7,.64,6,8); S(-24,.99,15,1.7,.7,1.7,11);
  return makeMesh(B)
@@ -315,7 +320,7 @@ function isLookingAtCraft(){
 }
 function rayHitsBox(box){const dir=rayForward(),origin=[eye.x,eye.y,eye.z],v=[dir.x,dir.y,dir.z];let enter=0,exit=3;for(let i=0;i<3;i++){if(Math.abs(v[i])<.00001){if(origin[i]<box[i][0]||origin[i]>box[i][1])return false;continue}let a=(box[i][0]-origin[i])/v[i],b=(box[i][1]-origin[i])/v[i];if(a>b)[a,b]=[b,a];enter=Math.max(enter,a);exit=Math.min(exit,b);if(exit<enter)return false}return true}
 function lookedSeat(){let best=null;for(const s of seats){const d=Math.hypot(eye.x-s.x,eye.z-s.z);if(d<2.4&&rayHitsBox([[s.x-.7,s.x+.7],[.35,2.1],[s.z-.7,s.z+.7]])&&(!best||d<best.d))best={s,d}}return best}
-function leaveSeat(){const s=seated,candidates=[[s.x+s.dz*1.65,s.z-s.dx*1.65],[s.x-s.dz*1.65,s.z+s.dx*1.65],[s.x-s.dx*1.75,s.z-s.dz*1.75]],spot=candidates.find(([x,z])=>!intersectBody(x,.86,z))||[0,14],support=topSupport(spot[0],spot[1],2.1,-.2);eye.x=spot[0];eye.z=spot[1];eye.y=(Number.isFinite(support)?support:0)+EYE_HEIGHT+.03;eye.vy=0;eye.ground=true;seated=null;toast('Standing up')}
+function leaveSeat(){const s=seated,candidates=[[s.x+s.dz*1.75,s.z-s.dx*1.75],[s.x-s.dz*1.75,s.z+s.dx*1.75],[s.x-s.dx*1.9,s.z-s.dz*1.9],[0,14]];let safe=null;for(const [x,z] of candidates){const support=topSupport(x,z,2.2,-.15);if(Number.isFinite(support)&&!intersectBody(x,support+.035,z)){safe={x,z,support};break}}safe=safe||{x:0,z:14,support:0};eye.x=safe.x;eye.z=safe.z;eye.y=safe.support+EYE_HEIGHT+.035;eye.vy=0;eye.ground=true;seated=null;for(const k in keys)keys[k]=false;toast('Standing up')}
 function openCraft(){if(!playing)return;toggle('craftPanel',true);updateCraftLeft()}
 function interact(){
  if(seated){leaveSeat();return}
@@ -404,7 +409,7 @@ function tick(now){requestAnimationFrame(tick);const dt=Math.min(.045,(now-lastF
  gl.bindTexture(gl.TEXTURE_2D,atlas);if(playing)showPlayerTags(now,vp);
  if(net.connected&&now-lastNetSend>190){lastNetSend=now;send({t:'move',x:eye.x,y:eye.y,z:eye.z,yaw:eye.yaw,moving:!!(keys.KeyW||keys.KeyS||controls.joystick)})}
  frameCount++;if(now-fpsStart>1500){frameFps=Math.round(frameCount*1000/(now-fpsStart));$('fps').textContent=frameFps+' FPS';frameCount=0;fpsStart=now;if(playing&&frameFps<23&&quality>.7&&now-lastQualityChange>7000){quality=.70;resize();lastQualityChange=now;toast('Automatic FPS mode enabled')}}
- if(playing&&frameCount%20===0){$('craftPrompt').hidden=!isNearCraft()||!!document.querySelector('.panel:not(.hidden)')||!$('spawnPopup').classList.contains('hidden');if(isNearCraft())setContext('Tap table · R or USE to craft');else setContext(protectedZone(eye.x,eye.z)?'Safe 100x100 spawn · E inventory · T chat · 1-9 hotbar':'Wild zone · mine grass and dirt (2 layers)')}
+ if(playing&&frameCount%20===0){const craftVisible=isNearCraft()&&!document.querySelector('.panel:not(.hidden)')&&$('spawnPopup').classList.contains('hidden');$('craftPrompt').hidden=!craftVisible;if(craftVisible)setContext('');else setContext(protectedZone(eye.x,eye.z)?'Safe 100x100 spawn · E inventory · T chat · 1-9 hotbar':'Wild zone · mine grass and dirt (2 layers)')}
 }
 // Read-only diagnostics for testing collision and entry points.
 window.BLOCKFUN_DIAGNOSTICS={getPosition:()=>({x:eye.x,y:eye.y,z:eye.z}),blocked:(x,z,feet=eye.y-EYE_HEIGHT)=>intersectBody(x,feet,z),colliderCount:()=>solidBoxes.length};
