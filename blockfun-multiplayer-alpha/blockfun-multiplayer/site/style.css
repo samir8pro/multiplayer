@@ -328,3 +328,33 @@ body.playing #world{cursor:none}
 @media(max-width:600px){
  #handOverlay{right:-2.8rem!important;bottom:-6rem!important;width:clamp(126px,38vw,168px)!important}
 }
+
+/* Reference arm: voxel skin and teal sleeve, cropped at the lower-right edge. */
+#handOverlay{
+ position:fixed!important;
+ display:block!important;
+ width:clamp(176px,24vw,286px)!important;
+ height:clamp(300px,56vh,458px)!important;
+ right:-8px!important;
+ bottom:-96px!important;
+ background:url('./assets/voxel-arm.svg') center bottom/contain no-repeat!important;
+ border:0!important;
+ clip-path:none!important;
+ box-shadow:none!important;
+ filter:drop-shadow(8px 11px 0 #0005)!important;
+ transform:translate3d(0,0,0)!important;
+ transform-origin:70% 100%!important;
+ opacity:0;
+ z-index:24!important;
+}
+#handOverlay .arm-face{display:none!important}
+#handOverlay.punching{animation:tweetpump-reference-punch .42s cubic-bezier(.18,.74,.27,1) both!important}
+@keyframes tweetpump-reference-punch{
+ 0%{transform:translate3d(0,0,0) scale(1)!important}
+ 24%{transform:translate3d(-72px,66px,0) scale(.91)!important}
+ 48%{transform:translate3d(-42px,40px,0) scale(.95)!important}
+ 100%{transform:translate3d(0,0,0) scale(1)!important}
+}
+@media(max-width:600px){
+ #handOverlay{width:clamp(148px,42vw,224px)!important;height:clamp(270px,52vh,360px)!important;right:-12px!important;bottom:-70px!important}
+}
