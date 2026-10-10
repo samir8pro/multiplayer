@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="520" viewBox="0 0 300 520" shape-rendering="crispEdges">
+  <defs>
+    <clipPath id="front"><polygon points="78,26 242,76 292,520 83,520 49,120"/></clipPath>
+    <clipPath id="side"><polygon points="22,102 78,26 83,520 40,462"/></clipPath>
+  </defs>
+  <g clip-path="url(#side)">
+    <rect width="100" height="168" fill="#783d25"/><rect y="168" width="100" height="82" fill="#9c6a40"/><rect y="250" width="100" height="300" fill="#07566d"/>
+    <path d="M22 102h33v54H15zm29 78h36v50H31zm-6 86h40v72H30zm15 92h30v83H40z" fill="#ffffff0b"/>
+  </g>
+  <g clip-path="url(#front)">
+    <rect x="45" width="255" height="170" fill="#a75e3d"/><rect x="45" y="170" width="255" height="82" fill="#c69a5d"/><rect x="45" y="252" width="255" height="300" fill="#087f99"/>
+    <path d="M78 26h52v49H70zm54 43h55v50h-55zm57 28h54v52h-54zm-125 69h53v54H59zm56 20h55v50h-55zm58 17h58v48h-58z" fill="#00000012"/>
+    <path d="M83 261h56v60H76zm58 16h56v63h-56zm59 20h61v64h-61zM92 352h59v68H84zm62 8h61v70h-61zm64 12h59v73h-59zM104 445h62v75h-62zm65 0h63v75h-63z" fill="#ffffff0b"/>
+    <path d="M56 222l205 53 5 28-207-50z" fill="#063f51" opacity=".42"/>
+  </g>
+  <polygon points="78,26 242,76 211,102 49,59" fill="#b56a48"/><polygon points="78,26 130,42 104,69 55,54" fill="#7c422c" opacity=".55"/>
+</svg>

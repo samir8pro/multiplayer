@@ -6,7 +6,7 @@
 <meta name="description" content="A multiplayer voxel world inside a protected 100x100 spawn.">
 <meta name="twitter:card" content="player"><meta name="twitter:title" content="BLOCKFUN — Play in X"><meta name="twitter:description" content="Explore the protected BLOCKFUN spawn, build and chat — no signup.">
 <meta name="twitter:image" content="https://dynamic-klepon-d46485.netlify.app/preview.png"><meta name="twitter:player" content="https://dynamic-klepon-d46485.netlify.app/player.html?v=continuous-world-20261009"><meta name="twitter:player:width" content="800"><meta name="twitter:player:height" content="450">
-<link rel="stylesheet" href="style.css?v=craft-click-arm3d-20261010-14"><script defer src="config.js?v=craft-click-arm3d-20261010-14"></script><script defer src="boot.js?v=craft-click-arm3d-20261010-14"></script><script type="module" id="blockfunEngine" src="game.js?v=craft-click-arm3d-20261010-14"></script>
+<link rel="stylesheet" href="style.css?v=sprint-cooldown-arm-20261010-15"><script defer src="config.js?v=sprint-cooldown-arm-20261010-15"></script><script defer src="boot.js?v=sprint-cooldown-arm-20261010-15"></script><script type="module" id="blockfunEngine" src="game.js?v=sprint-cooldown-arm-20261010-15"></script>
 </head><body>
 <canvas id="world" aria-label="BLOCKFUN voxel world"></canvas>
 <div id="start" class="overlay"><div class="startCard">
@@ -19,7 +19,7 @@
 <div id="hud" hidden>
   <div class="topbar"><button class="miniBtn" id="menuBtn" aria-label="Menu">MENU</button><strong>BLOCKFUN</strong><span id="online">SOLO</span><span id="fps">FPS</span></div>
   <div class="topActions"><button id="inventoryBtn">[E] Inventory</button><button id="chatBtn">[T] Chat</button></div>
-  <div id="crosshair">＋</div><div id="contextHint">Touch the world and drag to look</div>
+  <div id="crosshair">＋</div><div id="attackCooldown" aria-hidden="true"><i></i></div><div id="contextHint">Touch the world and drag to look</div>
   <div class="bottom"><div id="vitals"><span id="hearts" aria-label="Health: 10 hearts"></span><span id="food" aria-label="Food: 10"></span></div><div id="hotbar" aria-label="9-slot hotbar"></div></div>
   <div id="joystick"><div id="knob"></div></div>
   <div class="gameActions"><button id="mineBtn"><span class="actionIcon">X</span><small>MINE</small></button><button id="placeBtn"><span class="actionIcon">[]</span><small>PLACE</small></button><button id="useBtn"><span class="actionIcon">+</span><small>USE</small></button><button id="jumpBtn"><span class="actionIcon">^</span><small>JUMP</small></button></div>

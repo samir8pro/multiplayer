@@ -229,3 +229,15 @@ body.playing #world{cursor:none}
 #craftPrompt{bottom:170px!important}
 @media(max-width:600px){#handOverlay{width:112px!important;height:248px!important;right:4px!important;bottom:-66px!important;transform:rotate(-15deg)!important}#handOverlay::before{left:-17px;width:18px;top:10px}#handOverlay::after{top:-16px;height:18px;clip-path:polygon(0 100%,16px 0,100% 6px,100% 100%)}#craftPrompt{bottom:126px!important}@keyframes blockfun-punch-pc{0%{translate:0 0;scale:1}34%{translate:-46px 52px;scale:.94}62%{translate:-22px 24px;scale:.98}100%{translate:0 0;scale:1}}}
 @media(max-height:470px){#craftPrompt{bottom:86px!important}#vitals{height:12px!important}}
+
+/* Reference-matched voxel arm and visible attack recharge indicator. */
+#handOverlay{width:clamp(175px,13vw,245px)!important;height:clamp(310px,45vh,455px)!important;right:1.4vw!important;bottom:-58px!important;background:url('./assets/voxel-arm.svg') center bottom/contain no-repeat!important;clip-path:none!important;box-shadow:none!important;filter:drop-shadow(8px 12px 0 #0004)!important;transform:rotate(0deg)!important;transform-origin:70% 100%!important;translate:0 0;scale:1}
+#handOverlay::before,#handOverlay::after{content:none!important;display:none!important}
+#handOverlay.punch{animation:blockfun-reference-punch .42s cubic-bezier(.18,.74,.27,1)!important}
+@keyframes blockfun-reference-punch{0%{translate:0 0;scale:1}24%{translate:-92px 82px;scale:.91}48%{translate:-58px 54px;scale:.95}100%{translate:0 0;scale:1}}
+#attackCooldown{position:absolute;z-index:25;left:50%;top:calc(50% + 25px);width:42px;height:7px;transform:translateX(-50%);padding:1px;background:#181818;border:1px solid #000;box-shadow:0 1px 0 #fff5;opacity:0;overflow:hidden}
+#attackCooldown i{display:block;width:100%;height:100%;background:#e8e8e8;transform-origin:left center;transform:scaleX(1)}
+#attackCooldown.cooling{opacity:1}
+#attackCooldown.cooling i{animation:blockfun-cooldown .42s linear both}
+@keyframes blockfun-cooldown{0%{transform:scaleX(0)}100%{transform:scaleX(1)}}
+@media(max-width:600px){#handOverlay{width:132px!important;height:292px!important;right:-2px!important;bottom:-44px!important}@keyframes blockfun-reference-punch{0%{translate:0 0;scale:1}24%{translate:-52px 56px;scale:.91}48%{translate:-30px 31px;scale:.95}100%{translate:0 0;scale:1}}#attackCooldown{top:calc(50% + 23px);width:36px}}
