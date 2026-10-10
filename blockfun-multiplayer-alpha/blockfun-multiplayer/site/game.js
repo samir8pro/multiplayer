@@ -278,7 +278,7 @@ function updatePreviewSkin(){
  const pv=document.querySelector('.playerPreview'),hand=$('handOverlay');
  const p=skinPalettes[player.skin%skinPalettes.length];
  if(pv){pv.style.setProperty('--shirt',p.shirt);pv.style.setProperty('--sleeve',p.shirt2);pv.style.setProperty('--skin',p.skin);pv.style.setProperty('--hair',p.hair);pv.style.setProperty('--pants',p.pants);pv.style.setProperty('--shoe',p.shoe)}
- if(hand){hand.style.setProperty('--shirt',p.shirt);hand.style.setProperty('--skin',p.skin);hand.src='./assets/skins/arm'+(player.skin%skinPalettes.length)+'.png'}
+ if(hand){hand.classList.remove('punching')}
 }
 const playerTags=new Map();let lastTagUpdate=0;
 function showPlayerTags(now,vp){
@@ -311,8 +311,11 @@ function send(message){if(net.ws?.readyState===WebSocket.OPEN)net.ws.send(JSON.s
 const controls={forward:0,strafe:0,joystick:false};let touchId=null;
 const stick=$('joystick'),knob=$('knob');function stickMove(e){const r=stick.getBoundingClientRect();let x=e.clientX-(r.left+r.width/2),y=e.clientY-(r.top+r.height/2);let radius=r.width*.29,mag=Math.hypot(x,y);if(mag>radius){x*=radius/mag;y*=radius/mag}controls.forward=-y/radius;controls.strafe=x/radius;knob.style.transform=`translate(${x}px,${y}px)`}
 stick.onpointerdown=e=>{e.preventDefault();touchId=e.pointerId;controls.joystick=true;stick.setPointerCapture(touchId);stickMove(e)};stick.onpointermove=e=>{if(e.pointerId===touchId)stickMove(e)};function stickEnd(e){if(e.pointerId!==touchId)return;controls.joystick=false;controls.forward=controls.strafe=0;touchId=null;knob.style.transform='translate(0,0)'}stick.onpointerup=stickEnd;stick.onpointercancel=stickEnd;
-let punchReadyAt=0,punchTimer=0;
-function punchHand(){const hand=$('handOverlay'),cooldown=$('attackCooldown');if(!hand||!playing)return;clearTimeout(punchTimer);const skin=player.skin%skinPalettes.length;hand.src='./assets/skins/punch.gif?v='+Date.now();cooldown?.classList.remove('cooling');void hand.offsetWidth;cooldown?.classList.add('cooling');punchTimer=setTimeout(()=>{hand.src='./assets/skins/arm'+skin+'.png';cooldown?.classList.remove('cooling')},390)}
+const ARM_SWING_MS=440,ARM_RESTART_POINT=.50;
+let punchStartedAt=0,punchTimer=0,punchActive=false;
+function finishPunch(){const hand=$('handOverlay'),cooldown=$('attackCooldown');punchActive=false;hand?.classList.remove('punching');cooldown?.classList.remove('cooling')}
+function startPunch(){const hand=$('handOverlay'),cooldown=$('attackCooldown');if(!hand)return;clearTimeout(punchTimer);hand.classList.remove('punching');cooldown?.classList.remove('cooling');void hand.offsetWidth;punchStartedAt=performance.now();punchActive=true;hand.classList.add('punching');cooldown?.classList.add('cooling');punchTimer=setTimeout(finishPunch,ARM_SWING_MS+30)}
+function punchHand(){if(!playing)return;if(!punchActive){startPunch();return}const progress=(performance.now()-punchStartedAt)/ARM_SWING_MS;if(progress<ARM_RESTART_POINT)return;startPunch()}
 let pointerUnlockUntil=0;
 document.addEventListener('pointerlockchange',()=>document.body.classList.toggle('pointer-locked',document.pointerLockElement===canvas));
 document.addEventListener('mousemove',e=>{if(!playing||typing||document.pointerLockElement!==canvas)return;eye.yaw-=e.movementX*.0028;eye.pitch=Math.max(-1.25,Math.min(1.25,eye.pitch-e.movementY*.0025))});

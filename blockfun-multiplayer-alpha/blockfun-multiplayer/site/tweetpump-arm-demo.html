@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>TWEETPUMP - Brazo en primera persona</title>
+<style>
+:root {
+  /* Variables faciles de cambiar */
+  --arm-duration: 440ms;
+  --arm-drop-x: -72vw;
+  --arm-drop-y: 105vh;
+  --skin-left: #79533A;
+  --skin-right: #5B3F2D;
+  --band-left: #9B8659;
+  --band-right: #746444;
+  --sleeve-left: #1A494C;
+  --sleeve-right-top: #0F3238;
+  --sleeve-right-bottom: #1C4850;
+}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#86b8df;touch-action:none;user-select:none}
+.world{position:fixed;inset:0;background:linear-gradient(#78ade0 0 56%,#5c9c43 56% 73%,#3e7131 73%);cursor:crosshair}
+.crosshair{position:fixed;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%);filter:drop-shadow(1px 1px #000)}
+.crosshair::before,.crosshair::after{content:"";position:absolute;background:#fff}
+.crosshair::before{left:10px;top:0;width:2px;height:22px}.crosshair::after{left:0;top:10px;width:22px;height:2px}
+.help{position:fixed;top:18px;left:50%;transform:translateX(-50%);padding:9px 13px;background:#0009;color:#fff;font:14px system-ui;text-align:center}
+
+/* Prisma 4x12x4: ancho 1, alto 3. Solo hay una pieza y dos caras. */
+#firstPersonArm{
+  position:fixed;
+  right:-2.2rem;
+  bottom:-7.5rem;
+  width:clamp(132px,16vw,192px);
+  aspect-ratio:1/3;
+  pointer-events:none;
+  transform-origin:54% 100%;
+  transform:translate3d(0,0,0) rotate(-31deg);
+  will-change:transform;
+  filter:drop-shadow(9px 12px 8px #0004);
+}
+.arm-face{position:absolute;inset:0}
+.arm-face::after{
+  content:"";position:absolute;inset:0;opacity:.11;
+  background:
+    linear-gradient(90deg,transparent 0 46%,#fff4 46% 52%,transparent 52%) 0 0/23px 23px,
+    linear-gradient(0deg,transparent 0 47%,#0003 47% 53%,transparent 53%) 0 0/23px 23px;
+}
+.arm-left{
+  clip-path:polygon(50% 0,0 7%,0 93%,50% 100%);
+  background:linear-gradient(180deg,var(--skin-left) 0 49%,var(--band-left) 49% 56%,var(--sleeve-left) 56% 100%);
+}
+.arm-right{
+  clip-path:polygon(50% 0,100% 7%,100% 93%,50% 100%);
+  background:linear-gradient(180deg,var(--skin-right) 0 49%,var(--band-right) 49% 56%,var(--sleeve-right-top) 56%,var(--sleeve-right-bottom) 100%);
+}
+#firstPersonArm.punching{animation:arm-punch var(--arm-duration) both}
+@keyframes arm-punch{
+  0%{transform:translate3d(0,0,0) rotate(-31deg)}
+  23%{transform:translate3d(var(--arm-drop-x),var(--arm-drop-y),0) rotate(-54deg)}
+  56%{transform:translate3d(var(--arm-drop-x),var(--arm-drop-y),0) rotate(-54deg)}
+  100%{transform:translate3d(0,0,0) rotate(-31deg)}
+}
+@media(max-width:600px){#firstPersonArm{right:-2.8rem;bottom:-6rem;width:clamp(126px,38vw,168px)}.help{font-size:12px;width:92%}}
+</style>
+</head>
+<body>
+<main id="world" class="world" aria-label="Haz clic para golpear">
+  <div class="crosshair" aria-hidden="true"></div>
+  <div class="help">Haz clic o toca una vez para golpear</div>
+  <div id="firstPersonArm" aria-hidden="true">
+    <div class="arm-face arm-left"></div>
+    <div class="arm-face arm-right"></div>
+  </div>
+</main>
+<script>
+/* Variables de control faciles de cambiar */
+const ARM_DURATION_MS = 440;
+const ARM_RESTART_POINT = 0.50;
+
+const arm = document.getElementById('firstPersonArm');
+let swingStartedAt = 0;
+let swingTimer = 0;
+let swingActive = false;
+
+function finishSwing(){
+  swingActive = false;
+  arm.classList.remove('punching');
+}
+
+function startSwing(){
+  clearTimeout(swingTimer);
+  arm.classList.remove('punching');
+  void arm.offsetWidth; // reinicia la animacion sin superponer otra
+  swingStartedAt = performance.now();
+  swingActive = true;
+  arm.classList.add('punching');
+  swingTimer = setTimeout(finishSwing, ARM_DURATION_MS + 30);
+}
+
+function punch(){
+  if(!swingActive){ startSwing(); return; }
+  const progress = (performance.now() - swingStartedAt) / ARM_DURATION_MS;
+  if(progress < ARM_RESTART_POINT) return; // primera mitad: ignorar
+  startSwing(); // segunda mitad: reiniciar desde cero
+}
+
+/* pointerup produce un golpe por pulsacion. Mantener no repite. */
+document.getElementById('world').addEventListener('pointerup', punch);
+</script>
+</body>
+</html>
