@@ -249,3 +249,9 @@ body.playing #world{cursor:none}
 #handOverlay{position:fixed!important;display:block!important;width:clamp(205px,28vw,330px)!important;height:auto!important;right:-8px!important;bottom:18px!important;background:none!important;border:0!important;clip-path:none!important;box-shadow:none!important;filter:drop-shadow(7px 9px 0 #0004)!important;object-fit:contain!important;image-rendering:auto!important;transform:none!important;translate:0 0!important;scale:1!important;z-index:24!important;pointer-events:none!important;opacity:0}
 #handOverlay::before,#handOverlay::after{content:none!important;display:none!important}
 @media(max-width:600px){#handOverlay{width:clamp(170px,39vw,230px)!important;right:-10px!important;bottom:70px!important}}
+
+
+/* Final interaction fixes: menu stays clickable and inventory avatar stays inside its frame. */
+#menuBtn{position:relative!important;z-index:60!important;pointer-events:auto!important;cursor:pointer!important}
+.playerPreview{overflow:hidden!important}
+.playerPreview .avatarHead,.playerPreview .avatarBody,.playerPreview .avatarLegs{max-width:80%!important}
