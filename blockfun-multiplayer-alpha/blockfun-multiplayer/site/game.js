@@ -5,7 +5,7 @@ const $ = id => document.getElementById(id);
 const canvas=$('world');
 const gl=(canvas.getContext('webgl',{antialias:false,alpha:false,depth:true,powerPreference:'low-power',preserveDrawingBuffer:false}) || canvas.getContext('webgl',{antialias:false,alpha:false,depth:true}) || canvas.getContext('experimental-webgl'));
 if(!gl){throw Error('WebGL unavailable. Try Chrome or enable hardware acceleration')}
-const WORLD_HALF=50, SAFE_HALF=50, CHUNK=16, RADIUS=2;
+const WORLD_HALF=500, SAFE_HALF=50, CHUNK=16, RADIUS=2;
 const eye={x:0,y:1.62,z:14,yaw:0,pitch:0,vy:0,ground:true};
 const textureNames=['Grass','Dirt','Stone','Ore'];
 const inv={grass:0,dirt:0,stone:0,ore:0};
@@ -46,7 +46,9 @@ const imageAtlas=new Image();
 imageAtlas.onload=()=>{
   gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,atlas);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,0);
-  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,imageAtlas);
+  // Keep the supplied pack for wood/stone, but guarantee a clearly green grass tile.
+  const packed=document.createElement('canvas');packed.width=packed.height=128;const pctx=packed.getContext('2d');pctx.imageSmoothingEnabled=false;pctx.drawImage(imageAtlas,0,0,128,128);pctx.fillStyle='#62a83f';pctx.fillRect(0,0,32,32);for(let i=0;i<42;i++){pctx.fillStyle=i%2?'#4d9136':'#82c955';pctx.fillRect((i*17)%31,(i*11)%31,2,2)}
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,packed);
   gl.generateMipmap(gl.TEXTURE_2D);
   window.BLOCKFUN_AZURYX_LOADED=true;
 };
@@ -189,10 +191,12 @@ function constructSpawn(){let B=new Builder();
  // A 2-step walkable porch and oak-decorated inside, Minecraft-like crafting cabin.
  S(0,.28,-11.1,3.6,.40,1.7,4);
  C(0,1.34,-18.8); // crafting table with Minecraft-like top and side textures
- // Four seats around the table. Both the seat and back are real colliders.
+ // Distinct chairs: seat, four legs and tall backrest. All parts are solid colliders.
  for(const [x,z,dx,dz] of [[-3,-18.8,-1,0],[3,-18.8,1,0],[0,-21.8,0,-1],[0,-15.8,0,1]]){
-  S(x,1.02,z,1.15,.38,1.15,5); S(x+dx*.38,1.72,z+dz*.38,.95,1.45,.22,5);
-  seats.push({x,z,top:1.21,dx,dz});
+  S(x,1.00,z,1.2,.34,1.2,5);
+  for(const [lx,lz] of [[-.42,-.42],[.42,-.42],[-.42,.42],[.42,.42]])S(x+lx,0.78,z+lz,.16,.55,.16,5);
+  S(x+dx*.43,1.72,z+dz*.43,1.02,1.5,.22,5);
+  seats.push({x,z,top:1.17,dx,dz});
  }
  S(-4.5,1.34,-22,2,1,1,5);S(4.5,1.34,-22,2,1,1,5); // full-block benches
  // four lantern stands on the plaza path
@@ -223,7 +227,7 @@ function buildQuarry(){let B=new Builder();const first=!quarryStaticsAdded;
 let quarryMesh=buildQuarry();
 function playerName(n){return String(n||'Miner').replace(/[^\p{L}\p{N} _.-]/gu,'').slice(0,18)||'Miner'}
 function formatGrid(){
- const labels={grass:['GR','Grass'],dirt:['DI','Dirt'],stone:['ST','Stone'],ore:['OR','Ore']};
+ const labels={grass:['▧','Grass'],dirt:['▣','Dirt'],stone:['▦','Stone'],ore:['◆','Ore']};
  const bar=$('hotbar'),invGrid=$('inventoryGrid'),invBar=$('inventoryHotbar');
  bar.replaceChildren();invGrid.replaceChildren();invBar.replaceChildren();
  const renderSlot=(key,i,forInventory)=>{
@@ -236,7 +240,7 @@ function formatGrid(){
   btn.onclick=()=>selectSlot(i);return btn;
  };
  hotbarSlots.forEach((key,i)=>{bar.append(renderSlot(key,i,false));invBar.append(renderSlot(key,i,true))});
- for(let i=0;i<27;i++){let empty=document.createElement('button');empty.type='button';empty.className='item';empty.setAttribute('aria-label','Empty inventory slot');empty.onclick=()=>toast('Storage slot '+(i+1)+' selected');invGrid.append(empty)}
+ for(let i=0;i<27;i++){let empty=document.createElement('div');empty.className='item';empty.setAttribute('aria-label','Empty inventory slot');invGrid.append(empty)}
 }
 function selectSlot(i){selectedSlot=(i+9)%9;selected=hotbarSlots[selectedSlot]||null;formatGrid()}
 // --- Camera matrices ---
@@ -331,16 +335,16 @@ function rayHitsBox(box){
  const dir=rayForward(),origin=[eye.x,eye.y,eye.z],v=[dir.x,dir.y,dir.z];let enter=.05,exit=6.5;
  for(let i=0;i<3;i++){if(Math.abs(v[i])<.00001){if(origin[i]<box[i][0]||origin[i]>box[i][1])return false;continue}let a=(box[i][0]-origin[i])/v[i],b=(box[i][1]-origin[i])/v[i];if(a>b)[a,b]=[b,a];enter=Math.max(enter,a);exit=Math.min(exit,b);if(exit<enter)return false}return true;
 }
-function lookedSeat(){let best=null;for(const s of seats){const d=Math.hypot(eye.x-s.x,eye.z-s.z);if(d<2.2&&rayHitsBox([[s.x-.72,s.x+.72],[.55,2.25],[s.z-.72,s.z+.72]])&&(!best||d<best.d))best={s,d}}return best}
+function lookedSeat(){let best=null;for(const s of seats){const d=Math.hypot(eye.x-s.x,eye.z-s.z);if(d<2.25&&rayHitsBox([[s.x-.75,s.x+.75],[.45,2.45],[s.z-.75,s.z+.75]])&&(!best||d<best.d))best={s,d}}return best}
 function openCraft(){if(!playing)return;toggle('craftPanel',true);updateCraftLeft()}
 function interact(){
  const targetSeat=lookedSeat();
- if(seated){seated=false;eye.y=targetSeat?.s.top+.9||1.62;eye.vy=0;eye.ground=true;toast('Standing up');return}
- if(targetSeat){const s=targetSeat.s;seated=true;eye.x=s.x-s.dx*.25;eye.z=s.z-s.dz*.25;eye.y=s.top+.92;eye.vy=0;eye.ground=true;for(const k in keys)keys[k]=false;toast('Seated');return}
+ if(seated){seated=false;eye.y=1.62;eye.vy=0;eye.ground=true;toast('Standing up');return}
+ if(targetSeat){const s=targetSeat.s;seated=true;eye.x=s.x-s.dx*.28;eye.z=s.z-s.dz*.28;eye.y=s.top+.95;eye.vy=0;eye.ground=true;for(const k in keys)keys[k]=false;toast('Seated');return}
  if(isNearCraft()&&isLookingAtCraft()){openCraft();return}
  if(Math.hypot(eye.x-24,eye.z-15)<5){openMarket();return}
  if(Math.hypot(eye.x-quarry.x,eye.z-quarry.z)<9){toast('Peaceful quarry: tap MINE to collect ore');return}
- toast('Look directly at a seat or the crafting table, then press R.')
+ toast('Look at a chair or the crafting table, then press R.')
 }
 $('craftPrompt').onclick=openCraft;
 let crafted=[];function readCraft(){try{let s=JSON.parse(localStorage.getItem('blockfun-craft-final')||'{}');return s.day===new Date().toISOString().slice(0,10)?s:{day:new Date().toISOString().slice(0,10),items:[]}}catch{return {day:new Date().toISOString().slice(0,10),items:[]}}}let craftState=readCraft();function updateCraftLeft(){$('craftLeft').textContent=(3-craftState.items.length)+' crafts left';$('craftButton').disabled=craftState.items.length>=3}updateCraftLeft();
@@ -415,7 +419,7 @@ function tick(now){requestAnimationFrame(tick);const dt=Math.min(.045,(now-lastF
   if(Number.isFinite(support)&&newFeet<=support&&oldFeet>=support-.11){newFeet=support;eye.vy=0;eye.ground=true}
   else eye.ground=false;
  }
- eye.y=newFeet+EYE_HEIGHT;
+ eye.y=seated?2.12:newFeet+EYE_HEIGHT;
  if(eye.y<-2.1){eye.x=0;eye.z=14;eye.y=EYE_HEIGHT;eye.vy=0;eye.ground=true;toast('Returned to spawn · Peaceful mode')}}
  updateChunks();const dir=rayForward(),moving=playing&&(keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD||Math.abs(controls.forward)+Math.abs(controls.strafe)>.07),bob=(moving&&eye.ground)?Math.sin(now*.015)*.028:0,camY=eye.y+bob;const hand=$('handOverlay');if(hand){const swing=(moving&&eye.ground)?Math.sin(now*.017):0;const uiOpen=!!document.querySelector('.panel:not(.hidden)')||!$('spawnPopup').classList.contains('hidden');hand.style.opacity=playing&&!uiOpen?'1':'0';hand.style.transform='translate('+((moving?swing*9:0))+'px,'+((moving?Math.abs(swing)*11:0))+'px) rotate('+(moving?swing*5:0)+'deg)';}const vp=mul(persp(Math.PI*.40,canvas.width/canvas.height,.1,108),lookAt(eye.x,camY,eye.z,eye.x+dir.x,camY+dir.y,eye.z+dir.z));viewProj=vp;
  gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uni.vp,false,vp);gl.uniform3f(uni.eye,eye.x,eye.y,eye.z);gl.uniform3f(uni.sky,.55,.75,1);
