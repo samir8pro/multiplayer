@@ -198,11 +198,12 @@ html,body{background:#6a6a6a;color:#fff}
 .slot{border-radius:1px!important;background:#777!important;border:2px solid #2b2b2b!important;box-shadow:inset 2px 2px #bcbcbc,inset -2px -2px #4a4a4a!important}
 .slot.active{border:3px solid #ffd638!important;background:#989898!important;box-shadow:0 0 0 1px #171717,inset 1px 1px #dedede!important}
 @media(max-width:600px){#handOverlay{right:-2%!important;bottom:11%!important;width:clamp(120px,32vw,185px)!important}}
-/* Final gameplay polish: compact first-person hand, reliable inventory clicks and chat at bottom. */
-#handOverlay{width:clamp(96px,18vw,165px)!important;right:-1%!important;bottom:7%!important;filter:drop-shadow(5px 7px 0 rgba(0,0,0,.32)) saturate(1.08)!important;image-rendering:pixelated!important}
-#inventoryPanel .item,#inventoryHotbar .item{pointer-events:auto!important;cursor:pointer!important;position:relative!important;z-index:3!important}
-#inventoryPanel .item:focus-visible,#inventoryPanel .item:hover{border-color:#ffe35c!important;outline:2px solid #3b2d00!important;outline-offset:-2px!important}
-#chatPreview{left:10px!important;bottom:78px!important;max-width:min(52vw,360px)!important;background:#171717e8!important;border:2px solid #4b4b4b!important;padding:6px 8px!important;color:#fff!important}
-#chatPanel{top:auto!important;bottom:76px!important;max-height:min(58vh,390px)!important}
-#vitals{font-variant-numeric:tabular-nums!important;letter-spacing:.3px!important}
-@media(max-width:600px){#handOverlay{width:clamp(90px,25vw,145px)!important;bottom:9%!important}#chatPreview{bottom:75px!important;max-width:64vw!important}#chatPanel{bottom:74px!important}}
+/* TweetPump.fun final compact Minecraft-like inventory and hand. */
+#inventoryPanel .playerPreview{overflow:hidden!important;clip-path:inset(0)!important;min-height:0!important}
+#inventoryPanel .avatarHead,#inventoryPanel .avatarBody,#inventoryPanel .avatarLegs{transform:translateX(-50%) scale(.78)!important;transform-origin:top center!important}
+#inventoryPanel .avatarHead{top:5px!important}.playerPreview .avatarBody{top:43px!important}.playerPreview .avatarLegs{top:82px!important}
+#inventoryPanel .armorCol{position:relative;z-index:2;align-content:start!important;gap:5px!important}.armorSlot{width:27px!important;height:27px!important}
+#handOverlay{width:clamp(92px,17vw,150px)!important;right:-1%!important;bottom:6%!important;filter:drop-shadow(4px 5px 0 rgba(0,0,0,.28))!important;transition:transform .12s ease-out,opacity .15s!important}
+#handOverlay:not([style*="translate"]){transform:none!important}
+#hotbar .slotIcon{font-size:14px!important}
+@media(max-width:600px){#handOverlay{width:clamp(86px,23vw,130px)!important;right:-2%!important;bottom:10%!important}.invWrap{grid-template-columns:118px minmax(0,1fr)!important}.playerPreview{height:112px!important}}
