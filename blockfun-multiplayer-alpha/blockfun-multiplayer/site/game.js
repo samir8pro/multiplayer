@@ -52,18 +52,34 @@ imageAtlas.onload=()=>{
 };
 imageAtlas.onerror=()=>{console.warn('AZURYX atlas unavailable; using procedural backup')};
 imageAtlas.src='./assets/blockfun-pack-atlas.png?v=green-world-20261010-10';
-// Unique blocky player skins (our own pixel textures), separate from the crafting table atlas.
-const skinTextures=new Array(6).fill(null);
-for(let si=0;si<6;si++){
- const im=new Image();im.onload=()=>{
-  const tex=gl.createTexture();gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,0);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,im);
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST_MIPMAP_LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-  gl.generateMipmap(gl.TEXTURE_2D);skinTextures[si]=tex;
- };im.src='./assets/skins/skin'+si+'.png';
+// Ten original voxel skins. They are built synchronously at the exact 4x8 atlas
+// size expected by the shader, so a player never appears with a half-loaded skin.
+const skinPalettes=[
+ {shirt:'#258b91',shirt2:'#17636b',skin:'#e2aa7e',hair:'#563221',pants:'#263846',shoe:'#17212a',accent:'#65d2d0'},
+ {shirt:'#62a843',shirt2:'#39712e',skin:'#f0c19a',hair:'#382920',pants:'#33402f',shoe:'#1d2521',accent:'#a8dc62'},
+ {shirt:'#3c67ad',shirt2:'#29457e',skin:'#b97d59',hair:'#261b1e',pants:'#273a66',shoe:'#172039',accent:'#6aa0ff'},
+ {shirt:'#a04991',shirt2:'#693567',skin:'#e2b5a0',hair:'#995f2d',pants:'#49304f',shoe:'#251c2a',accent:'#eb83cf'},
+ {shirt:'#b05b3f',shirt2:'#7a3c2e',skin:'#c98b63',hair:'#2e2420',pants:'#3d493a',shoe:'#202722',accent:'#ee8d56'},
+ {shirt:'#667b87',shirt2:'#405361',skin:'#efbd96',hair:'#b08754',pants:'#344b5c',shoe:'#1e2a34',accent:'#9fc4d5'},
+ {shirt:'#d19a2e',shirt2:'#8d641b',skin:'#8f5c3f',hair:'#171313',pants:'#4b3429',shoe:'#211815',accent:'#ffe06a'},
+ {shirt:'#6a50aa',shirt2:'#3f3474',skin:'#d69d72',hair:'#292035',pants:'#23243d',shoe:'#151625',accent:'#a98cff'},
+ {shirt:'#2e9b70',shirt2:'#17644a',skin:'#f1c7a4',hair:'#703c28',pants:'#325044',shoe:'#172820',accent:'#66e2a9'},
+ {shirt:'#b43b50',shirt2:'#742536',skin:'#70462f',hair:'#191313',pants:'#31333c',shoe:'#17181d',accent:'#ff7081'}
+];
+function makeSkinTexture(p,variant){
+ const c=document.createElement('canvas');c.width=128;c.height=256;const ctx=c.getContext('2d');
+ const tile=(n,color)=>{const x=n%4*32,y=Math.floor(n/4)*32;ctx.fillStyle=color;ctx.fillRect(x,y,32,32);return [x,y]};
+ let [x,y]=tile(0,p.skin);ctx.fillStyle=p.hair;ctx.fillRect(x,y,32,8);ctx.fillRect(x,y+8,5,8);ctx.fillStyle='#29201c';ctx.fillRect(x+7,y+15,4,4);ctx.fillRect(x+21,y+15,4,4);ctx.fillStyle='#a9665a';ctx.fillRect(x+13,y+24,7,2);
+ tile(1,p.hair);[x,y]=tile(2,p.skin);ctx.fillStyle=p.hair;ctx.fillRect(x,y,32,7);
+ [x,y]=tile(3,p.shirt);ctx.fillStyle=p.shirt2;ctx.fillRect(x,y+23,32,9);ctx.fillStyle=p.accent;ctx.fillRect(x+12,y+5,8,12);ctx.fillRect(x+8,y+9,16,4);
+ [x,y]=tile(4,p.shirt2);ctx.fillStyle=p.accent;ctx.fillRect(x+5,y+6,22,5);
+ [x,y]=tile(5,p.shirt);ctx.fillStyle=p.skin;ctx.fillRect(x,y+23,32,9);ctx.fillStyle=p.shirt2;ctx.fillRect(x+4+(variant%3)*3,y+5,5,14);
+ tile(6,p.shirt2);[x,y]=tile(7,p.pants);ctx.fillStyle=p.shirt2;ctx.fillRect(x,y,32,7);ctx.fillStyle='#ffffff16';ctx.fillRect(x+5,y+10,5,14);
+ [x,y]=tile(8,p.shoe);ctx.fillStyle=p.pants;ctx.fillRect(x,y,32,11);ctx.fillStyle=p.accent;ctx.fillRect(x+3,y+4,8,3);
+ for(let n=9;n<32;n++)tile(n,n%2?p.shirt2:p.pants);
+ const tex=gl.createTexture();gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,0);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,c);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.generateMipmap(gl.TEXTURE_2D);return tex;
 }
+const skinTextures=skinPalettes.map(makeSkinTexture);
 
 class Builder{constructor(){this.v=[];this.i=[]}
  quad(p,uv,t,sh=1){const j=this.v.length/7;for(let k=0;k<4;k++)this.v.push(p[k][0],p[k][1],p[k][2],uv[k][0],uv[k][1],t,sh);this.i.push(j,j+1,j+2,j,j+2,j+3)}
@@ -226,7 +242,11 @@ function formatGrid(){
  for(let i=0;i<27;i++){let empty=document.createElement('button');empty.type='button';empty.className='item uiSlot';empty.setAttribute('aria-label','Empty inventory slot');invGrid.append(empty)}
 }
 function selectSlot(i){selectedSlot=(i+9)%9;selected=hotbarSlots[selectedSlot]||null;formatGrid()}
-const inventoryPanel=$('inventoryPanel');inventoryPanel.addEventListener('click',e=>{const cell=e.target.closest('.item,.armorSlot,.craftCell,.craftOut');if(!cell)return;inventoryPanel.querySelectorAll('.ui-selected').forEach(el=>el.classList.remove('ui-selected'));cell.classList.add('ui-selected')});
+const inventoryPanel=$('inventoryPanel');
+function markInventoryCell(cell){if(!cell)return;inventoryPanel.querySelectorAll('.ui-selected').forEach(el=>el.classList.remove('ui-selected'));cell.classList.add('ui-selected')}
+inventoryPanel.addEventListener('click',e=>markInventoryCell(e.target.closest('.item,.armorSlot,.craftCell,.craftOut')));
+inventoryPanel.addEventListener('pointerover',e=>{if(e.pointerType!=='touch')markInventoryCell(e.target.closest('.item,.armorSlot,.craftCell,.craftOut'))});
+inventoryPanel.addEventListener('focusin',e=>markInventoryCell(e.target.closest('.item,.armorSlot,.craftCell,.craftOut')));
 // --- Camera matrices ---
 function persp(fov,aspect,near,far){const f=1/Math.tan(fov/2),o=new Float32Array(16);o[0]=f/aspect;o[5]=f;o[10]=(far+near)/(near-far);o[11]=-1;o[14]=2*far*near/(near-far);return o}
 function normalize(a){const n=Math.hypot(...a)||1;return a.map(v=>v/n)}
@@ -253,13 +273,12 @@ function avatarModel(skin,frame){
 }
 function getAvatarMesh(skin,frame){const key=skin+':'+frame;if(!avatarCache.has(key))avatarCache.set(key,avatarModel(skin,frame));return avatarCache.get(key)}
 function addChat(name,message,self=false){let log=$('chatLog'),l=document.createElement('div');l.className='chatMsg';let b=document.createElement('b');b.textContent=name+': ';l.append(b,document.createTextNode(message));log.append(l);while(log.children.length>45)log.firstChild.remove();log.scrollTop=log.scrollHeight;let p=document.createElement('div');p.textContent=name+': '+message;$('chatPreview').append(p);while($('chatPreview').children.length>3)$('chatPreview').firstChild.remove()}
-const player={name:'Miner',skin:Math.floor(Math.random()*6)};
+const player={name:'Miner',skin:Math.floor(Math.random()*skinPalettes.length)};
 function updatePreviewSkin(){
  const pv=document.querySelector('.playerPreview'),hand=$('handOverlay');
- const colors=[['#3f8b91','#e0aa7e','#5a3428'],['#659b43','#f0c19a','#392c26'],['#3b64a4','#b77b57','#271d20'],['#8c4a81','#e2b5a0','#9c632e'],['#9d593f','#c58a62','#2e2521'],['#61717c','#efbc95','#b38a56']];
- const [shirt,skin,hair]=colors[player.skin%colors.length];
- if(pv){pv.style.setProperty('--shirt',shirt);pv.style.setProperty('--sleeve',shirt);pv.style.setProperty('--skin',skin);pv.style.setProperty('--hair',hair)}
- if(hand){hand.style.setProperty('--shirt',shirt);hand.style.setProperty('--skin',skin)}
+ const p=skinPalettes[player.skin%skinPalettes.length];
+ if(pv){pv.style.setProperty('--shirt',p.shirt);pv.style.setProperty('--sleeve',p.shirt2);pv.style.setProperty('--skin',p.skin);pv.style.setProperty('--hair',p.hair);pv.style.setProperty('--pants',p.pants);pv.style.setProperty('--shoe',p.shoe)}
+ if(hand){hand.style.setProperty('--shirt',p.shirt);hand.style.setProperty('--skin',p.skin)}
 }
 const playerTags=new Map();let lastTagUpdate=0;
 function showPlayerTags(now,vp){
@@ -294,15 +313,17 @@ const stick=$('joystick'),knob=$('knob');function stickMove(e){const r=stick.get
 stick.onpointerdown=e=>{e.preventDefault();touchId=e.pointerId;controls.joystick=true;stick.setPointerCapture(touchId);stickMove(e)};stick.onpointermove=e=>{if(e.pointerId===touchId)stickMove(e)};function stickEnd(e){if(e.pointerId!==touchId)return;controls.joystick=false;controls.forward=controls.strafe=0;touchId=null;knob.style.transform='translate(0,0)'}stick.onpointerup=stickEnd;stick.onpointercancel=stickEnd;
 let punchReadyAt=0,punchTimer=0;
 function punchHand(){const hand=$('handOverlay'),cooldown=$('attackCooldown'),now=performance.now();if(!hand||!playing||now<punchReadyAt)return;punchReadyAt=now+420;clearTimeout(punchTimer);hand.classList.remove('punch');cooldown?.classList.remove('cooling');void hand.offsetWidth;hand.classList.add('punch');cooldown?.classList.add('cooling');punchTimer=setTimeout(()=>{hand.classList.remove('punch');cooldown?.classList.remove('cooling')},420)}
+let pointerUnlockUntil=0;
 document.addEventListener('pointerlockchange',()=>document.body.classList.toggle('pointer-locked',document.pointerLockElement===canvas));
 document.addEventListener('mousemove',e=>{if(!playing||typing||document.pointerLockElement!==canvas)return;eye.yaw-=e.movementX*.0028;eye.pitch=Math.max(-1.25,Math.min(1.25,eye.pitch-e.movementY*.0025))});
 function primaryClick(){if(isNearCraft()&&isLookingAtCraft()){openCraft();return true}punchHand();return false}
-document.addEventListener('mousedown',e=>{if(!playing||typing||e.button!==0)return;const target=e.target;if(target instanceof Element&&target.closest('button,input,textarea,.panel,.mcPopup'))return;if(target===canvas||document.pointerLockElement===canvas){const openedCraft=primaryClick();if(!openedCraft&&document.pointerLockElement!==canvas)canvas.requestPointerLock?.()}});
+document.addEventListener('mousedown',e=>{if(!playing||typing||e.button!==0)return;const target=e.target;if(target instanceof Element&&target.closest('button,input,textarea,.panel,.mcPopup'))return;if(target===canvas||document.pointerLockElement===canvas){const openedCraft=primaryClick();if(!openedCraft&&!document.body.classList.contains('ui-open')&&performance.now()>pointerUnlockUntil&&document.pointerLockElement!==canvas)canvas.requestPointerLock?.()}});
 let tapOriginX=0,tapOriginY=0,tapMoved=false;canvas.addEventListener('pointerdown',e=>{if(!playing||typing||e.pointerType!=='touch')return;lookPointer=e.pointerId;tapOriginX=lastLookX=e.clientX;tapOriginY=lastLookY=e.clientY;tapMoved=false;canvas.setPointerCapture(e.pointerId)});canvas.addEventListener('pointermove',e=>{if(lookPointer!==e.pointerId||!playing)return;let dx=e.clientX-lastLookX,dy=e.clientY-lastLookY;lastLookX=e.clientX;lastLookY=e.clientY;if(Math.hypot(e.clientX-tapOriginX,e.clientY-tapOriginY)>10)tapMoved=true;eye.yaw-=dx*.0045;eye.pitch=Math.max(-1.25,Math.min(1.25,eye.pitch-dy*.0037))});canvas.addEventListener('pointerup',e=>{if(e.pointerType!=='touch'||e.pointerId!==lookPointer)return;lookPointer=null;if(!tapMoved)primaryClick()});canvas.addEventListener('pointercancel',e=>{if(e.pointerId===lookPointer)lookPointer=null});canvas.oncontextmenu=e=>{e.preventDefault();if(playing&&!typing)interact()};
 let lastWPress=0,doubleTapSprint=false;
-window.addEventListener('keydown',e=>{if(e.target instanceof HTMLInputElement||e.target instanceof HTMLTextAreaElement)return;if(e.code==='KeyW'&&!e.repeat){const now=performance.now();doubleTapSprint=now-lastWPress<300;lastWPress=now}keys[e.code]=true;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(!playing)return;if(e.code==='KeyE'){toggle('inventoryPanel');return}if(e.code==='KeyT'){toggle('chatPanel');return}if(e.code==='KeyR'){interact();return}if(e.code==='Escape'){for(const el of document.querySelectorAll('.panel'))el.classList.add('hidden');if($('spawnPopup'))$('spawnPopup').classList.add('hidden');typing=false;return}if(e.code==='KeyF'){mine();return}if(e.code==='KeyP'){place();return}if(e.code==='KeyI'){toggle('inventoryPanel');return}if(e.code==='Digit1'||e.code==='Digit2'||e.code==='Digit3'||e.code==='Digit4'||e.code==='Digit5'||e.code==='Digit6'||e.code==='Digit7'||e.code==='Digit8'||e.code==='Digit9'){selectSlot(Number(e.code.replace('Digit',''))-1);return}});window.addEventListener('keyup',e=>{keys[e.code]=false;if(e.code==='KeyW')doubleTapSprint=false});window.addEventListener('blur',()=>{for(const k in keys)keys[k]=false;doubleTapSprint=false});
+window.addEventListener('keydown',e=>{if(e.target instanceof HTMLInputElement||e.target instanceof HTMLTextAreaElement)return;if(e.code==='KeyW'&&!e.repeat){const now=performance.now();doubleTapSprint=now-lastWPress<300;lastWPress=now}keys[e.code]=true;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(!playing)return;if(e.code==='KeyE'){toggle('inventoryPanel');return}if(e.code==='KeyT'){toggle('chatPanel');return}if(e.code==='KeyR'){interact();return}if(e.code==='Escape'){for(const el of document.querySelectorAll('.panel'))el.classList.add('hidden');if($('spawnPopup'))$('spawnPopup').classList.add('hidden');typing=false;syncUiCursor();return}if(e.code==='KeyF'){mine();return}if(e.code==='KeyP'){place();return}if(e.code==='KeyI'){toggle('inventoryPanel');return}if(e.code==='Digit1'||e.code==='Digit2'||e.code==='Digit3'||e.code==='Digit4'||e.code==='Digit5'||e.code==='Digit6'||e.code==='Digit7'||e.code==='Digit8'||e.code==='Digit9'){selectSlot(Number(e.code.replace('Digit',''))-1);return}});window.addEventListener('keyup',e=>{keys[e.code]=false;if(e.code==='KeyW')doubleTapSprint=false});window.addEventListener('blur',()=>{for(const k in keys)keys[k]=false;doubleTapSprint=false});
 $('jumpBtn').onpointerdown=e=>{e.preventDefault();keys.Space=true};$('jumpBtn').onpointerup=()=>keys.Space=false;$('jumpBtn').onpointercancel=()=>keys.Space=false;
-function toggle(id,open){for(const p of document.querySelectorAll('.panel'))if(p.id!==id)p.classList.add('hidden');const el=$(id),show=open??el.classList.contains('hidden');el.classList.toggle('hidden',!show);typing=show&&id==='chatPanel';if(show&&document.pointerLockElement===canvas)document.exitPointerLock?.();if(typing)$('chatInput').focus()}
+function syncUiCursor(){const open=!!document.querySelector('.panel:not(.hidden),.mcPopup:not(.hidden)');document.body.classList.toggle('ui-open',open);if(open){pointerUnlockUntil=performance.now()+500;for(const k in keys)keys[k]=false;controls.forward=controls.strafe=0;if(document.pointerLockElement)document.exitPointerLock?.()}}
+function toggle(id,open){for(const p of document.querySelectorAll('.panel'))if(p.id!==id)p.classList.add('hidden');const el=$(id),show=open??el.classList.contains('hidden');el.classList.toggle('hidden',!show);typing=show&&id==='chatPanel';syncUiCursor();if(typing)$('chatInput').focus()}
 for(const btn of document.querySelectorAll('[data-close]'))btn.onclick=()=>toggle(btn.dataset.close,false);
 $('chatBtn').onclick=()=>toggle('chatPanel');$('inventoryBtn').onclick=()=>toggle('inventoryPanel');$('menuBtn').onclick=()=>toggle('menuPanel');$('mineBtn').onclick=mine;$('placeBtn').onclick=place;$('useBtn').onclick=interact;$('stayBtn').onclick=()=>toggle('spawnPopup',false);
 $('chatForm').onsubmit=e=>{e.preventDefault();const t=$('chatInput').value.trim();if(!t)return;if(net.connected)send({t:'chat',text:t});else addChat(player.name,t);$('chatInput').value=''};
@@ -314,7 +335,7 @@ function mine(){if(!playing)return;const t=groundTarget();if(protectedZone(t.x,t
 function place(){if(!playing)return;const t=groundTarget();if(protectedZone(t.x,t.z)){toast('Protected spawn');return}if(!selected){toast('Select a hotbar slot first');return}if(!['grass','dirt'].includes(selected)){toast('You can only place dirt and grass');return}if(inv[selected]<1){toast('You do not have any '+selected+' blocks');return}let s=state(t.x,t.z);if(s===2){dig.set(cellKey(t.x,t.z),1)}else if(s===1){dig.delete(cellKey(t.x,t.z))}else{toast('This ground already has 2 layers');return}inv[selected]--;formatGrid();rebuildAroundCell(t.x,t.z);toast('Block placed');send({t:'edit',action:'place',x:t.x,y:s===2?-1:0,z:t.z,block:selected})}
 function isNearCraft(){return Math.hypot(eye.x,eye.z+18.8)<7.4}
 function isLookingAtCraft(){
- const dir=rayForward(),box=[[-.5,.5],[.84,1.84],[-19.3,-18.3]],origin=[eye.x,eye.y,eye.z],v=[dir.x,dir.y,dir.z];
+ const dir=rayForward(),box=[[-.82,.82],[.62,2.02],[-19.62,-17.98]],origin=[eye.x,eye.y,eye.z],v=[dir.x,dir.y,dir.z];
  let enter=0,exit=6.5;
  for(let i=0;i<3;i++){
   if(Math.abs(v[i])<.00001){if(origin[i]<box[i][0]||origin[i]>box[i][1])return false;continue}
@@ -325,7 +346,7 @@ function isLookingAtCraft(){
 function rayHitsBox(box){const dir=rayForward(),origin=[eye.x,eye.y,eye.z],v=[dir.x,dir.y,dir.z];let enter=0,exit=3;for(let i=0;i<3;i++){if(Math.abs(v[i])<.00001){if(origin[i]<box[i][0]||origin[i]>box[i][1])return false;continue}let a=(box[i][0]-origin[i])/v[i],b=(box[i][1]-origin[i])/v[i];if(a>b)[a,b]=[b,a];enter=Math.max(enter,a);exit=Math.min(exit,b);if(exit<enter)return false}return true}
 function lookedSeat(){let best=null;for(const s of seats){const d=Math.hypot(eye.x-s.x,eye.z-s.z);if(d<2.4&&rayHitsBox([[s.x-.7,s.x+.7],[.35,2.1],[s.z-.7,s.z+.7]])&&(!best||d<best.d))best={s,d}}return best}
 function leaveSeat(){const s=seated,candidates=[[s.x+s.dz*1.75,s.z-s.dx*1.75],[s.x-s.dz*1.75,s.z+s.dx*1.75],[s.x-s.dx*1.9,s.z-s.dz*1.9],[0,14]];let safe=null;for(const [x,z] of candidates){const support=topSupport(x,z,2.2,-.15);if(Number.isFinite(support)&&!intersectBody(x,support+.035,z)){safe={x,z,support};break}}safe=safe||{x:0,z:14,support:0};eye.x=safe.x;eye.z=safe.z;eye.y=safe.support+EYE_HEIGHT+.035;eye.vy=0;eye.ground=true;seated=null;for(const k in keys)keys[k]=false;toast('Standing up')}
-function openCraft(){if(!playing)return;toggle('craftPanel',true);updateCraftLeft()}
+function openCraft(){if(!playing)return;pointerUnlockUntil=performance.now()+650;if(document.pointerLockElement)document.exitPointerLock?.();toggle('craftPanel',true);updateCraftLeft()}
 function interact(){
  if(seated){leaveSeat();return}
  const targetSeat=lookedSeat();if(targetSeat){seated=targetSeat.s;eye.x=seated.x-seated.dx*.18;eye.z=seated.z-seated.dz*.18;eye.y=seated.top+.95;eye.vy=0;eye.ground=true;for(const k in keys)keys[k]=false;toast('Seated');return}
@@ -390,7 +411,7 @@ window.BLOCKFUN_START=start;window.BLOCKFUN_READY=true;window.dispatchEvent(new 
 function resize(){const w=window.innerWidth,h=window.innerHeight;canvas.width=Math.max(1,Math.round(w*quality));canvas.height=Math.max(1,Math.round(h*quality));canvas.style.width=w+'px';canvas.style.height=h+'px';gl.viewport(0,0,canvas.width,canvas.height)}resize();window.addEventListener('resize',resize);
 // Main loop: small viewport, ~25 chunk draw calls, no lighting shadows or trees.
 function tick(now){requestAnimationFrame(tick);const dt=Math.min(.045,(now-lastFrame)/1000);lastFrame=now;
- if(playing&&!typing){if(seated&&(keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD||keys.Space||Math.abs(controls.forward)+Math.abs(controls.strafe)>.07))leaveSeat();if(seated){eye.y=seated.top+.95;eye.vy=0;eye.ground=true}else{let f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)+controls.forward,s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+controls.strafe;let n=Math.max(1,Math.hypot(f,s)),sprinting=f>0&&(keys.ShiftLeft||keys.ShiftRight||doubleTapSprint),speed=5.4*(sprinting?1.55:1)*dt;let nx=eye.x+(-Math.sin(eye.yaw)*f+Math.cos(eye.yaw)*s)/n*speed,nz=eye.z+(-Math.cos(eye.yaw)*f-Math.sin(eye.yaw)*s)/n*speed;
+ if(playing&&!typing&&!document.body.classList.contains('ui-open')){if(seated&&(keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD||keys.Space||Math.abs(controls.forward)+Math.abs(controls.strafe)>.07))leaveSeat();if(seated){eye.y=seated.top+.95;eye.vy=0;eye.ground=true}else{let f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)+controls.forward,s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+controls.strafe;let n=Math.max(1,Math.hypot(f,s)),sprinting=f>0&&(keys.ShiftLeft||keys.ShiftRight||doubleTapSprint),speed=5.4*(sprinting?1.55:1)*dt;let nx=eye.x+(-Math.sin(eye.yaw)*f+Math.cos(eye.yaw)*s)/n*speed,nz=eye.z+(-Math.cos(eye.yaw)*f-Math.sin(eye.yaw)*s)/n*speed;
  if(Math.abs(nx)<WORLD_HALF-1)tryMoveAxis(nx,eye.z);
  if(Math.abs(nz)<WORLD_HALF-1)tryMoveAxis(eye.x,nz);
  if(keys.Space&&eye.ground){eye.vy=6.3;eye.ground=false}
@@ -409,7 +430,7 @@ function tick(now){requestAnimationFrame(tick);const dt=Math.min(.045,(now-lastF
  updateChunks();const dir=rayForward(),moving=playing&&(keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD||Math.abs(controls.forward)+Math.abs(controls.strafe)>.07),camY=eye.y;const hand=$('handOverlay');if(hand){const uiOpen=!!document.querySelector('.panel:not(.hidden)')||!$('spawnPopup').classList.contains('hidden');hand.style.opacity=playing&&!uiOpen?'1':'0'}const vp=mul(persp(Math.PI*.40,canvas.width/canvas.height,.1,108),lookAt(eye.x,camY,eye.z,eye.x+dir.x,camY+dir.y,eye.z+dir.z));viewProj=vp;
  gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uni.vp,false,vp);gl.uniform3f(uni.eye,eye.x,eye.y,eye.z);gl.uniform3f(uni.sky,.55,.75,1);
  gl.bindTexture(gl.TEXTURE_2D,atlas);for(const m of chunks.values())drawMesh(m);drawMesh(spawnMesh);
- for(const p of remotes.values()){let t=Math.min(1,dt*9);p.x+=(p.targetX-p.x)*t;p.y+=(p.targetY-p.y)*t;p.z+=(p.targetZ-p.z)*t;const phase=p.moving?Math.floor(now/105)%8:0;gl.bindTexture(gl.TEXTURE_2D,skinTextures[p.skin%6]||atlas);drawMesh(getAvatarMesh(p.skin||0,phase),p.x,p.y-1.7,p.z,p.yaw||0)}
+ for(const p of remotes.values()){let t=Math.min(1,dt*9);p.x+=(p.targetX-p.x)*t;p.y+=(p.targetY-p.y)*t;p.z+=(p.targetZ-p.z)*t;const phase=p.moving?Math.floor(now/105)%8:0,skin=((Number(p.skin)||0)%skinTextures.length+skinTextures.length)%skinTextures.length;gl.bindTexture(gl.TEXTURE_2D,skinTextures[skin]||atlas);drawMesh(getAvatarMesh(skin,phase),p.x,p.y-1.7,p.z,p.yaw||0)}
  gl.bindTexture(gl.TEXTURE_2D,atlas);if(playing)showPlayerTags(now,vp);
  if(net.connected&&now-lastNetSend>190){lastNetSend=now;send({t:'move',x:eye.x,y:eye.y,z:eye.z,yaw:eye.yaw,moving:!!(keys.KeyW||keys.KeyS||controls.joystick)})}
  frameCount++;if(now-fpsStart>1500){frameFps=Math.round(frameCount*1000/(now-fpsStart));$('fps').textContent=frameFps+' FPS';frameCount=0;fpsStart=now;if(playing&&frameFps<23&&quality>.7&&now-lastQualityChange>7000){quality=.70;resize();lastQualityChange=now;toast('Automatic FPS mode enabled')}}
