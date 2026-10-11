@@ -261,7 +261,9 @@ function avatarModel(skin,frame){
   for(let j=from;j<B.v.length;j+=7){const dy=B.v[j+1]-pivotY,dz=B.v[j+2];B.v[j+1]=pivotY+dy*co-dz*sn;B.v[j+2]=dy*sn+dz*co;}
  }
  B.box6(0,1.14,0,.56,.74,.31,4,4,3,4,5,5);
- B.box6(0,1.79,0,.47,.48,.46,2,1,0,1,1,1);
+ // Keep the face readable from every multiplayer camera angle; the previous
+ // side/back mapping made the head look like a solid black block.
+ B.box6(0,1.79,0,.47,.48,.46,2,2,0,0,0,0);
  limb(-.18,.46,0,.22,.92,.26,7,a,.88);limb(.18,.46,0,.22,.92,.26,7,-a,.88);
  // Split each arm into a colored sleeve and a real skin-toned hand.
  limb(-.44,1.27,0,.20,.46,.24,5,-a,1.49);limb(-.44,.95,0,.20,.18,.24,9,-a,1.49);
