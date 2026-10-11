@@ -52,19 +52,14 @@ imageAtlas.onload=()=>{
 };
 imageAtlas.onerror=()=>{console.warn('AZURYX atlas unavailable; using procedural backup')};
 imageAtlas.src='./assets/blockfun-pack-atlas.png?v=green-world-20261010-10';
-// Ten original voxel skins. They are built synchronously at the exact 4x8 atlas
-// size expected by the shader, so a player never appears with a half-loaded skin.
+// Four inventory skins from the supplied reference. They are built synchronously
+// at the exact 4x8 atlas size expected by the shader, so a player never appears
+// with a half-loaded or mismatched 3D skin.
 const skinPalettes=[
- {shirt:'#258b91',shirt2:'#17636b',skin:'#e2aa7e',hair:'#563221',pants:'#263846',shoe:'#17212a',accent:'#65d2d0'},
- {shirt:'#62a843',shirt2:'#39712e',skin:'#f0c19a',hair:'#382920',pants:'#33402f',shoe:'#1d2521',accent:'#a8dc62'},
- {shirt:'#3c67ad',shirt2:'#29457e',skin:'#b97d59',hair:'#261b1e',pants:'#273a66',shoe:'#172039',accent:'#6aa0ff'},
- {shirt:'#a04991',shirt2:'#693567',skin:'#e2b5a0',hair:'#995f2d',pants:'#49304f',shoe:'#251c2a',accent:'#eb83cf'},
- {shirt:'#b05b3f',shirt2:'#7a3c2e',skin:'#c98b63',hair:'#2e2420',pants:'#3d493a',shoe:'#202722',accent:'#ee8d56'},
- {shirt:'#667b87',shirt2:'#405361',skin:'#efbd96',hair:'#b08754',pants:'#344b5c',shoe:'#1e2a34',accent:'#9fc4d5'},
- {shirt:'#d19a2e',shirt2:'#8d641b',skin:'#8f5c3f',hair:'#171313',pants:'#4b3429',shoe:'#211815',accent:'#ffe06a'},
- {shirt:'#6a50aa',shirt2:'#3f3474',skin:'#d69d72',hair:'#292035',pants:'#23243d',shoe:'#151625',accent:'#a98cff'},
- {shirt:'#2e9b70',shirt2:'#17644a',skin:'#f1c7a4',hair:'#703c28',pants:'#325044',shoe:'#172820',accent:'#66e2a9'},
- {shirt:'#b43b50',shirt2:'#742536',skin:'#70462f',hair:'#191313',pants:'#31333c',shoe:'#17181d',accent:'#ff7081'}
+ {shirt:'#238f94',shirt2:'#17666f',skin:'#d9956d',hair:'#563221',pants:'#243846',shoe:'#17212a',accent:'#66d9d4'},
+ {shirt:'#d59b25',shirt2:'#9b6818',skin:'#9b694e',hair:'#211818',pants:'#4b3429',shoe:'#211815',accent:'#ffe36b'},
+ {shirt:'#9d4b99',shirt2:'#673564',skin:'#e0b5a0',hair:'#2a1d25',pants:'#49304f',shoe:'#251c2a',accent:'#f181d0'},
+ {shirt:'#b53650',shirt2:'#762536',skin:'#70462f',hair:'#191313',pants:'#30323b',shoe:'#17181d',accent:'#ff7081'}
 ];
 function makeSkinTexture(p,variant){
  const c=document.createElement('canvas');c.width=128;c.height=256;const ctx=c.getContext('2d');
@@ -278,7 +273,7 @@ function updatePreviewSkin(){
  const pv=document.querySelector('.playerPreview'),hand=$('handOverlay');
  const p=skinPalettes[player.skin%skinPalettes.length];
  if(pv){pv.style.setProperty('--shirt',p.shirt);pv.style.setProperty('--sleeve',p.shirt2);pv.style.setProperty('--skin',p.skin);pv.style.setProperty('--hair',p.hair);pv.style.setProperty('--pants',p.pants);pv.style.setProperty('--shoe',p.shoe)}
- if(hand){hand.classList.remove('punching')}
+ if(hand){hand.style.setProperty('--hand-sleeve-left',p.shirt);hand.style.setProperty('--hand-sleeve-right-top',p.shirt2);hand.style.setProperty('--hand-sleeve-right-bottom',p.shirt);hand.classList.remove('punching')}
 }
 const playerTags=new Map();let lastTagUpdate=0;
 function showPlayerTags(now,vp){
@@ -434,7 +429,7 @@ function tick(now){requestAnimationFrame(tick);const dt=Math.min(.045,(now-lastF
  updateChunks();const dir=rayForward(),moving=playing&&(keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD||Math.abs(controls.forward)+Math.abs(controls.strafe)>.07),camY=eye.y;const hand=$('handOverlay');if(hand){const uiOpen=!!document.querySelector('.panel:not(.hidden)');hand.style.opacity=playing&&!uiOpen?'1':'0';hand.style.visibility=playing&&!uiOpen?'visible':'hidden'}const vp=mul(persp(Math.PI*.40,canvas.width/canvas.height,.1,108),lookAt(eye.x,camY,eye.z,eye.x+dir.x,camY+dir.y,eye.z+dir.z));viewProj=vp;
  gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uni.vp,false,vp);gl.uniform3f(uni.eye,eye.x,eye.y,eye.z);gl.uniform3f(uni.sky,.55,.75,1);
  gl.bindTexture(gl.TEXTURE_2D,atlas);for(const m of chunks.values())drawMesh(m);drawMesh(spawnMesh);
- for(const p of remotes.values()){let t=Math.min(1,dt*9);p.x+=(p.targetX-p.x)*t;p.y+=(p.targetY-p.y)*t;p.z+=(p.targetZ-p.z)*t;if(Math.hypot(p.x-eye.x,p.z-eye.z)<2)continue;const phase=p.moving?Math.floor(now/105)%8:0,skin=((Number(p.skin)||0)%skinTextures.length+skinTextures.length)%skinTextures.length;gl.bindTexture(gl.TEXTURE_2D,skinTextures[skin]||atlas);drawMesh(getAvatarMesh(skin,phase),p.x,p.y-1.7,p.z,p.yaw||0)}
+ for(const p of remotes.values()){let t=Math.min(1,dt*9);p.x+=(p.targetX-p.x)*t;p.y+=(p.targetY-p.y)*t;p.z+=(p.targetZ-p.z)*t;if(Math.hypot(p.x-eye.x,p.z-eye.z)<2)continue;const phase=p.moving?Math.floor(now/105)%8:0,skin=((Number(p.skin)||0)%skinPalettes.length+skinPalettes.length)%skinPalettes.length;gl.bindTexture(gl.TEXTURE_2D,skinTextures[skin]||atlas);drawMesh(getAvatarMesh(skin,phase),p.x,p.y-1.7,p.z,p.yaw||0)}
  gl.bindTexture(gl.TEXTURE_2D,atlas);if(playing)showPlayerTags(now,vp);
  if(net.connected&&now-lastNetSend>190){lastNetSend=now;send({t:'move',x:eye.x,y:eye.y,z:eye.z,yaw:eye.yaw,moving:!!(keys.KeyW||keys.KeyS||controls.joystick)})}
  frameCount++;if(now-fpsStart>1500){frameFps=Math.round(frameCount*1000/(now-fpsStart));$('fps').textContent=frameFps+' FPS';frameCount=0;fpsStart=now;if(playing&&frameFps<23&&quality>.7&&now-lastQualityChange>7000){quality=.70;resize();lastQualityChange=now;toast('Automatic FPS mode enabled')}}
