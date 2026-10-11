@@ -345,8 +345,8 @@ function createAvatarRenderer(){
    const angles=pose(p,now,dt);
    gl.bindTexture(gl.TEXTURE_2D,texture.texture);
    gl.uniform3f(uniforms.uOffset,p.x,p.y-EYE_HEIGHT,p.z);
-   // Canonical skin faces +Z; camera/player forward is -Z.
-   gl.uniform1f(uniforms.uYaw,(p.renderYaw??p.yaw??0)+Math.PI);
+   // Skin front must follow the player's forward direction.
+   gl.uniform1f(uniforms.uYaw,p.renderYaw??p.yaw??0);
    for(const part of parts){
     gl.bindBuffer(gl.ARRAY_BUFFER,part.vertex);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,part.index);
     for(const [name,size,offset] of [['aP',3,0],['aUV',2,12],['aShade',1,20]]){
