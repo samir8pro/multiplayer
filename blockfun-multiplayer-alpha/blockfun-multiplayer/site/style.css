@@ -352,3 +352,26 @@ body.playing #world{cursor:none}
  :root{--arm-width:clamp(150px,44vw,240px)}
  #handOverlay{right:calc(var(--arm-width)*.1)!important}
 }
+
+/* Four reference skins inside the inventory. */
+.skinPicker{margin:0 0 10px;padding:7px 0 8px;border-top:3px solid #777;border-bottom:3px solid #777}
+.skinPicker>.storageLabel{margin:0 0 6px}
+.skinChoices{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.skinChoice{position:relative;min-width:0;height:64px!important;padding:4px!important;background:#777!important;border:3px solid #454545!important;box-shadow:inset 0 2px #bdbdbd,inset 0 -3px #4b4b4b!important;display:flex;align-items:center;justify-content:center;cursor:pointer!important}
+.skinChoice.active{border-color:#ffde55!important;outline:2px solid #3b2c00!important;outline-offset:-2px!important;background:#a7a7a7!important}
+.skinChoice small{position:absolute;right:3px;bottom:2px;font-size:7px;color:#fff;text-shadow:1px 1px #222}
+.skinChoiceAvatar{position:relative;display:block;width:38px;height:53px;image-rendering:pixelated}
+.skinChoiceHead,.skinChoiceBody,.skinChoiceLegs{position:absolute;display:block;border:2px solid #252525}
+.skinChoiceHead{left:10px;top:2px;width:18px;height:18px;background:#d9956d;box-shadow:inset 0 0 0 3px #563221}
+.skinChoiceBody{left:5px;top:20px;width:28px;height:19px;background:#238f94;border-color:#17666f;box-shadow:inset 7px 0 #ffffff18,inset -7px 0 #0003}
+.skinChoiceLegs{left:9px;top:39px;width:20px;height:13px;background:linear-gradient(90deg,#243846 0 44%,transparent 44% 56%,#243846 56% 100%);border:0}
+.skinChoice:nth-child(2) .skinChoiceHead{background:#9b694e;box-shadow:inset 0 0 0 3px #211818}
+.skinChoice:nth-child(2) .skinChoiceBody{background:#d59b25;border-color:#9b6818}
+.skinChoice:nth-child(2) .skinChoiceLegs{background:linear-gradient(90deg,#4b3429 0 44%,transparent 44% 56%,#4b3429 56% 100%)}
+.skinChoice:nth-child(3) .skinChoiceHead{background:#e0b5a0;box-shadow:inset 0 0 0 3px #2a1d25}
+.skinChoice:nth-child(3) .skinChoiceBody{background:#9d4b99;border-color:#673564}
+.skinChoice:nth-child(3) .skinChoiceLegs{background:linear-gradient(90deg,#49304f 0 44%,transparent 44% 56%,#49304f 56% 100%)}
+.skinChoice:nth-child(4) .skinChoiceHead{background:#70462f;box-shadow:inset 0 0 0 3px #191313}
+.skinChoice:nth-child(4) .skinChoiceBody{background:#b53650;border-color:#762536}
+.skinChoice:nth-child(4) .skinChoiceLegs{background:linear-gradient(90deg,#30323b 0 44%,transparent 44% 56%,#30323b 56% 100%)}
+@media(max-width:600px){.skinChoices{gap:3px}.skinChoice{height:57px!important}.skinChoiceAvatar{transform:scale(.88)}}
