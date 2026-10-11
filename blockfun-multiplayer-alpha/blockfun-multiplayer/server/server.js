@@ -18,7 +18,7 @@ const allowed=new Set([
 ]);
 if(process.env.NODE_ENV!=='production'){allowed.add('http://localhost:'+PORT);allowed.add('http://127.0.0.1:'+PORT)}
 const site=fileURLToPath(new URL('../site/',import.meta.url));
-const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.png':'image/png','.json':'application/json'};
+const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.png':'image/png','.svg':'image/svg+xml','.json':'application/json'};
 const players=new Map(),history=[],mintRate=new Map();
 const MAX=40;
 const json=(res,status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(data))};
