@@ -355,7 +355,6 @@ body.playing #world{cursor:none}
 
 /* Single current Miner preview: cleaner, larger and consistent with the 3D model. */
 #inventoryPanel .playerPreview{background:linear-gradient(180deg,#294f61 0 68%,#1a303a 68% 100%)!important;border-color:#193541!important;box-shadow:inset 0 0 0 2px #5e91a0,0 3px 0 #202020!important}
-#inventoryPanel .playerPreview::after{content:'CURRENT MINER';position:absolute;left:4px;right:4px;bottom:3px;color:#b8e8e7;font-size:7px;letter-spacing:.08em;text-align:center;text-shadow:1px 1px #14232b}
 #inventoryPanel .avatarHead{background:linear-gradient(180deg,var(--hair,#563221) 0 22%,var(--skin,#d9956d) 22% 100%)!important;border-color:#3b241a!important;box-shadow:inset -7px 0 color-mix(in srgb,var(--skin,#d9956d),#000 16%),inset 0 -3px var(--skin,#d9956d)!important}
 #inventoryPanel .avatarBody{background:linear-gradient(90deg,var(--sleeve,#17666f) 0 18%,var(--shirt,#238f94) 18% 82%,var(--sleeve,#17666f) 82% 100%)!important;border-color:var(--sleeve,#17666f)!important;box-shadow:inset 0 5px color-mix(in srgb,var(--accent,#66d9d4),transparent 55%),inset 0 -6px color-mix(in srgb,var(--sleeve,#17666f),#000 18%)!important}
 #inventoryPanel .avatarBody::before,#inventoryPanel .avatarBody::after{background:var(--shirt,#238f94)!important;border-color:var(--sleeve,#17666f)!important}
