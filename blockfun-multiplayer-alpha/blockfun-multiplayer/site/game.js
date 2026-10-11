@@ -63,18 +63,19 @@ const skinPalettes=[
 ];
 function makeSkinTexture(p,variant){
  const c=document.createElement('canvas');c.width=128;c.height=256;const ctx=c.getContext('2d');
+ const variantIndex=Number.isFinite(variant)?variant:0;
  const tile=(n,color)=>{const x=n%4*32,y=Math.floor(n/4)*32;ctx.fillStyle=color;ctx.fillRect(x,y,32,32);return [x,y]};
  let [x,y]=tile(0,p.skin);ctx.fillStyle=p.hair;ctx.fillRect(x,y,32,8);ctx.fillRect(x,y+8,5,8);ctx.fillStyle='#29201c';ctx.fillRect(x+7,y+15,4,4);ctx.fillRect(x+21,y+15,4,4);ctx.fillStyle='#a9665a';ctx.fillRect(x+13,y+24,7,2);
  [x,y]=tile(1,p.skin);ctx.fillStyle=p.hair;ctx.fillRect(x,y,32,9);ctx.fillRect(x,y+9,32,5);ctx.fillStyle=p.skin;ctx.fillRect(x,y+14,32,18);[x,y]=tile(2,p.skin);ctx.fillStyle=p.hair;ctx.fillRect(x,y,32,7);
  [x,y]=tile(3,p.shirt);ctx.fillStyle=p.shirt2;ctx.fillRect(x,y+23,32,9);ctx.fillStyle=p.accent;ctx.fillRect(x+12,y+5,8,12);ctx.fillRect(x+8,y+9,16,4);
  [x,y]=tile(4,p.shirt2);ctx.fillStyle=p.accent;ctx.fillRect(x+5,y+6,22,5);
- [x,y]=tile(5,p.shirt);ctx.fillStyle=p.skin;ctx.fillRect(x,y+23,32,9);ctx.fillStyle=p.shirt2;ctx.fillRect(x+4+(variant%3)*3,y+5,5,14);
+ [x,y]=tile(5,p.shirt);ctx.fillStyle=p.skin;ctx.fillRect(x,y+23,32,9);ctx.fillStyle=p.shirt2;ctx.fillRect(x+4+(variantIndex%3)*3,y+5,5,14);
  tile(6,p.shirt2);[x,y]=tile(7,p.pants);ctx.fillStyle=p.shirt2;ctx.fillRect(x,y,32,7);ctx.fillStyle='#ffffff16';ctx.fillRect(x+5,y+10,5,14);
  [x,y]=tile(8,p.shoe);ctx.fillStyle=p.pants;ctx.fillRect(x,y,32,11);ctx.fillStyle=p.accent;ctx.fillRect(x+3,y+4,8,3);
  for(let n=9;n<32;n++)tile(n,n%2?p.shirt2:p.pants);
  const tex=gl.createTexture();gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,0);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,c);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.generateMipmap(gl.TEXTURE_2D);return tex;
 }
-const skinTextures=skinPalettes.map(makeSkinTexture);
+const skinTextures=skinPalettes.map((palette,index)=>makeSkinTexture(palette,index));
 
 class Builder{constructor(){this.v=[];this.i=[]}
  quad(p,uv,t,sh=1){const j=this.v.length/7;for(let k=0;k<4;k++)this.v.push(p[k][0],p[k][1],p[k][2],uv[k][0],uv[k][1],t,sh);this.i.push(j,j+1,j+2,j,j+2,j+3)}
