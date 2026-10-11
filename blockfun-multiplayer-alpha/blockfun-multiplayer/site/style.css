@@ -318,6 +318,10 @@ body.playing #world{cursor:none}
  clip-path:polygon(50% 0,100% 7%,100% 93%,50% 100%);
  background:linear-gradient(180deg,var(--arm-skin-right) 0 49%,var(--arm-band-right) 49% 56%,var(--arm-sleeve-right-top) 56%,var(--arm-sleeve-right-bottom) 100%);
 }
+#handOverlay svg polygon:nth-of-type(1),
+#handOverlay svg polygon:nth-of-type(2){fill:var(--hand-skin-left,#79533A)}
+#handOverlay svg polygon:nth-of-type(5),
+#handOverlay svg polygon:nth-of-type(6){fill:var(--hand-skin-right,#5B3F2D)}
 #handOverlay.punching{animation:voxel-arm-punch var(--arm-duration) both}
 @keyframes voxel-arm-punch{
  0%{transform:translate3d(0,0,0) rotate(-31deg)}
@@ -327,4 +331,61 @@ body.playing #world{cursor:none}
 }
 @media(max-width:600px){
  #handOverlay{right:-2.8rem!important;bottom:-6rem!important;width:clamp(126px,38vw,168px)!important}
+}
+
+/* Reference arm from the supplied demo: two voxel faces, cropped at the bottom. */
+:root{--arm-width:clamp(130px,18.3vw,360px);--drop-x:-20%;--drop-y:95%;--drop-rot:-10deg;--arm-duration:440ms}
+#handOverlay{
+ position:fixed!important;display:block!important;pointer-events:none!important;
+ width:var(--arm-width)!important;height:calc(var(--arm-width)*1.16)!important;aspect-ratio:250/290!important;
+ right:calc(var(--arm-width)*.55)!important;bottom:calc(var(--arm-width)*-.456)!important;
+ background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;clip-path:none!important;
+ transform:none!important;transform-origin:29% 97%!important;filter:drop-shadow(8px 11px 0 #0005)!important;
+ image-rendering:pixelated!important;object-fit:initial!important;opacity:0;z-index:24!important;visibility:hidden;
+}
+#handOverlay .armMotion{display:block;width:100%;height:100%;transform-origin:29% 97%;transform:none;will-change:transform}
+#handOverlay .armMotion svg{display:block;width:100%;height:100%;overflow:visible}
+#handOverlay.punching .armMotion{animation:tweetpump-demo-arm-punch var(--arm-duration) linear both}
+@keyframes tweetpump-demo-arm-punch{
+ 0%{transform:translate(0,0) rotate(0);animation-timing-function:cubic-bezier(.55,0,.9,.55)}
+ 23%{transform:translate(var(--drop-x),var(--drop-y)) rotate(var(--drop-rot))}
+ 56%{transform:translate(var(--drop-x),var(--drop-y)) rotate(var(--drop-rot));animation-timing-function:cubic-bezier(.15,.7,.3,1)}
+ 100%{transform:translate(0,0) rotate(0)}
+}
+@media(max-width:600px){
+ :root{--arm-width:clamp(150px,44vw,240px)}
+ #handOverlay{right:calc(var(--arm-width)*.1)!important}
+}
+
+/* Single current Miner preview: cleaner, larger and consistent with the 3D model. */
+#inventoryPanel .playerPreview{background:linear-gradient(180deg,#294f61 0 68%,#1a303a 68% 100%)!important;border-color:#193541!important;box-shadow:inset 0 0 0 2px #5e91a0,0 3px 0 #202020!important}
+#inventoryPanel .avatarHead{background:linear-gradient(180deg,var(--hair,#563221) 0 22%,var(--skin,#d9956d) 22% 100%)!important;border-color:#3b241a!important;box-shadow:inset -7px 0 color-mix(in srgb,var(--skin,#d9956d),#000 16%),inset 0 -3px var(--skin,#d9956d)!important}
+#inventoryPanel .avatarBody{background:linear-gradient(90deg,var(--sleeve,#17666f) 0 18%,var(--shirt,#238f94) 18% 82%,var(--sleeve,#17666f) 82% 100%)!important;border-color:var(--sleeve,#17666f)!important;box-shadow:inset 0 5px color-mix(in srgb,var(--accent,#66d9d4),transparent 55%),inset 0 -6px color-mix(in srgb,var(--sleeve,#17666f),#000 18%)!important}
+#inventoryPanel .avatarBody::before,#inventoryPanel .avatarBody::after{background:var(--shirt,#238f94)!important;border-color:var(--sleeve,#17666f)!important}
+#inventoryPanel .avatarLegs{background:linear-gradient(90deg,var(--pants,#243846) 0 46%,transparent 46% 54%,var(--pants,#243846) 54% 100%)!important;box-shadow:inset 0 -4px var(--shoe,#17212a)}
+/* Give the inventory character the same block-depth as the world model. */
+#inventoryPanel .playerPreview{perspective:260px;perspective-origin:50% 46%;}
+#inventoryPanel .avatarHead{transform:translateX(-50%) rotateY(-16deg) rotateX(3deg);transform-style:preserve-3d;filter:drop-shadow(4px 4px 0 #0007)}
+#inventoryPanel .avatarBody{transform:translateX(-50%) rotateY(-13deg) rotateX(3deg);transform-style:preserve-3d;filter:drop-shadow(4px 5px 0 #0007)}
+#inventoryPanel .avatarBody::before{transform:skewY(-4deg) translateX(-1px);box-shadow:inset 3px 0 #ffffff18}
+#inventoryPanel .avatarBody::after{transform:skewY(4deg) translateX(1px);box-shadow:inset -3px 0 #0003}
+#inventoryPanel .avatarLegs{transform:translateX(-50%) rotateY(-10deg);filter:drop-shadow(3px 4px 0 #0007)}
+#inventoryPanel .referenceSkin{
+ position:absolute;left:50%;top:0;width:68px;height:138px;
+ transform:translateX(-50%);
+ background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfAAAAD8CAMAAAC/xwYbAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAADYUExURUFBQUs5MEU1LispKSkoKG1QNmJJMywpKSooKFYyIUkqHBcTExMQEJlfLYNRJhkTExUQEOKqfo9cP+K1oHBGL8KSbHpPNsKbiWA8KCkgHKlmWiWLkRdjax93fNGaLo1kG7OEJ6BJkWk1Z4k+fLQ7UHQlNpoyRGXS0P/gauuDz/9wgRNVW3lVF1otWGMfLiY4RiAwPEs0KUAsI0kwTz4pQzEzPCorMxchKhMcJCEYFRwUEiUcKh8YJBcYHRMUGCswNSkuMjAsKi4qKTIuNS8sMissLikqLP///8O1i00AAAABYktHREdgvcl7AAAAB3RJTUUH6goLADQ5ApV2GwAAABBjYU52AAAAfAAAAPwAAAAAAAAAAAO60l0AAAPvSURBVHja7dzHThxREIZRnHMg4wAYbIzBOecc3v+RHKhh0boqee7taYznfMsuqf/FWTUjMTMjSZIkSZIkacCOVHQ0apw+VtHxqHH6REUno8bpUxWdjoADH7szFZ2NGqfPVXQ+apy+UNHFqHH6UkWXI+DAgQMHDhw4cODAgQMHDhw4cODAgQMHDhw4cOATAp8do57B58aoZ/D5MeoZfGGMgAMHDhw4cODAgQMHDhz4VIMvRgcAvhQdAPhydADgKxFw4MCBAwcOHDhw4MCBAz/04F3MK38qPx097wm8i7k3UX46et4TeBdzb6L8dPS8J/Au5t5E+enoOXDgwIEDBw4cOPApBx/ws2ycz7GeP8vG+Rzr+bNsnM+xIT7LgAMHDhw4cODAgQMHDhz4PwB+tdOA4N3pAcG70wOCd6eBAwcOHDhw4MCBAwcOHPhUgef5w0vv4HnAgQMHDhw4cODAgQMHDvwQgV8rdj26VtFqVH7H6ur+9Fqx9WitohtR+R2/DqPpjWKb0UZFN6PyO35fYvpWsa3oVkW3o/I7/pyAAwcOHDhw4MCBAwcOHDhw4MCBAwcOHDhw4MCB9we+3WlA8DudBgTf6TQg+G4n4MCBAwcOHDhw4MCBAwc+JeDbaRMFv5M2UfCdtImC76YBBw4cOHDgwIEDBw4cOHDgwIEDBw4cOHDgwIEDHxS8zN4l9fPof/PzKHDgwIEDBw4cOHDgwIEDBw4cOHDgwIEDBw4cOHDgwIFPFXief9vVO3gecODAgQMHDhw4cODAgQMHDhw4cODAgQMHDhw48Grw2bTrFd2Nym9cXNyfnktbr+heVH7j0tLSaHo+bbOi+1H5jcu/iumFtK2KHkTlN678Djhw4MCBAwcOHDhw4MCBAwcOHDhw4MCBAwcOHDhw4MCBAwcOHDhw4MCBAwcOHDhw4MAnB56Xk+bXvx4pl5Pm18bpnDS/Nk7npPm1cRo4cODAgQMHDhz4YQF/WOxRlF8bpx8XexLl18bpp8WeRfm1cfp5sRdRfgUOHDhw4MCBAwcOHDhw4MCBAwcOHDhw4MCBAwcOHDhw4MCBAwcOHDhw4MCBAwcOHDhw4MCBAwcOHDhw4MCBAwcOHDhw4MCBAwcOHDhw4MCBAwcOHDhw4MCBAwcOHDhw4MCBAwcOHDhw4MCBAwcOHDhw4MCBAwcOHDhw4MCBAwc+VeAvi72K8mvj9Otib6L82jj9tti7KL82Tr8v9iHKr8CBAwcOHDhw4MCBAwcOHDhw4MCBAwcOHDhw4MCBAwcOHDhw4MCBAwcOHDhw4IcW/GOxT1F+bZz+XOxLlF8bp78W+xbl18bp78V+RPkVOPBRPwG0WayZPV9jQwAAAABJRU5ErkJggg==);
+ background-repeat:no-repeat;background-size:272px 138px;background-position:0 0;
+ image-rendering:pixelated;z-index:2;pointer-events:none;
+}
+#inventoryPanel .referenceSkin[data-skin="1"]{background-position:-68px 0}
+#inventoryPanel .referenceSkin[data-skin="2"]{background-position:-136px 0}
+#inventoryPanel .referenceSkin[data-skin="3"]{background-position:-204px 0}
+#inventoryPanel .playerPreview .avatarHead,
+#inventoryPanel .playerPreview .avatarBody,
+#inventoryPanel .playerPreview .avatarLegs{display:none!important}
+@media(max-width:600px){
+ #inventoryPanel .referenceSkin{width:55px;height:112px;background-size:220px 112px}
+ #inventoryPanel .referenceSkin[data-skin="1"]{background-position:-55px 0}
+ #inventoryPanel .referenceSkin[data-skin="2"]{background-position:-110px 0}
+ #inventoryPanel .referenceSkin[data-skin="3"]{background-position:-165px 0}
 }
