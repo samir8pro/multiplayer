@@ -52,14 +52,11 @@ imageAtlas.onload=()=>{
 };
 imageAtlas.onerror=()=>{console.warn('AZURYX atlas unavailable; using procedural backup')};
 imageAtlas.src='./assets/blockfun-pack-atlas.png?v=green-world-20261010-10';
-// Four inventory skins from the supplied reference. They are built synchronously
-// at the exact 4x8 atlas size expected by the shader, so a player never appears
-// with a half-loaded or mismatched 3D skin.
+// One definitive player appearance: the turquoise Miner shown in the supplied
+// in-game reference. The inventory preview and multiplayer model use this same
+// palette so the character does not change unexpectedly.
 const skinPalettes=[
- {shirt:'#238f94',shirt2:'#17666f',skin:'#d9956d',hair:'#563221',pants:'#243846',shoe:'#17212a',accent:'#66d9d4'},
- {shirt:'#d59b25',shirt2:'#9b6818',skin:'#9b694e',hair:'#211818',pants:'#4b3429',shoe:'#211815',accent:'#ffe36b'},
- {shirt:'#9d4b99',shirt2:'#673564',skin:'#e0b5a0',hair:'#2a1d25',pants:'#49304f',shoe:'#251c2a',accent:'#f181d0'},
- {shirt:'#b53650',shirt2:'#762536',skin:'#70462f',hair:'#191313',pants:'#30323b',shoe:'#17181d',accent:'#ff7081'}
+ {shirt:'#238f94',shirt2:'#17666f',skin:'#d9956d',hair:'#563221',pants:'#243846',shoe:'#17212a',accent:'#66d9d4'}
 ];
 function makeSkinTexture(p,variant){
  const c=document.createElement('canvas');c.width=128;c.height=256;const ctx=c.getContext('2d');
@@ -268,21 +265,13 @@ function avatarModel(skin,frame){
 }
 function getAvatarMesh(skin,frame){const key=skin+':'+frame;if(!avatarCache.has(key))avatarCache.set(key,avatarModel(skin,frame));return avatarCache.get(key)}
 function addChat(name,message,self=false){let log=$('chatLog'),l=document.createElement('div');l.className='chatMsg';let b=document.createElement('b');b.textContent=name+': ';l.append(b,document.createTextNode(message));log.append(l);while(log.children.length>45)log.firstChild.remove();log.scrollTop=log.scrollHeight;let p=document.createElement('div');p.textContent=name+': '+message;$('chatPreview').append(p);while($('chatPreview').children.length>3)$('chatPreview').firstChild.remove()}
-const player={name:'Miner',skin:Math.floor(Math.random()*skinPalettes.length)};
+const player={name:'Miner',skin:0};
 function updatePreviewSkin(){
  const pv=document.querySelector('.playerPreview'),hand=$('handOverlay');
  const p=skinPalettes[player.skin%skinPalettes.length];
  if(pv){pv.style.setProperty('--shirt',p.shirt);pv.style.setProperty('--sleeve',p.shirt2);pv.style.setProperty('--skin',p.skin);pv.style.setProperty('--hair',p.hair);pv.style.setProperty('--pants',p.pants);pv.style.setProperty('--shoe',p.shoe)}
  if(hand){hand.style.setProperty('--hand-sleeve-left',p.shirt);hand.style.setProperty('--hand-sleeve-right-top',p.shirt2);hand.style.setProperty('--hand-sleeve-right-bottom',p.shirt);hand.classList.remove('punching')}
 }
-function selectSkin(index){
- player.skin=((Number(index)||0)%skinPalettes.length+skinPalettes.length)%skinPalettes.length;
- updatePreviewSkin();
- document.querySelectorAll('.skinChoice').forEach(button=>button.classList.toggle('active',Number(button.dataset.skin)===player.skin));
- if(playing)send({t:'profile',name:player.name,skin:player.skin});
- toast('Skin '+(player.skin+1)+' equipada');
-}
-document.querySelectorAll('.skinChoice').forEach(button=>button.addEventListener('click',()=>selectSkin(button.dataset.skin)));
 const playerTags=new Map();let lastTagUpdate=0;
 function showPlayerTags(now,vp){
  if(now-lastTagUpdate<240)return;lastTagUpdate=now;
@@ -467,11 +456,10 @@ requestAnimationFrame(tick);
    const fallbackDraw=now=>{if(!fallbackRunning)return;const w=window.innerWidth,h=window.innerHeight;fallbackCtx.clearRect(0,0,w,h);const sky=fallbackCtx.createLinearGradient(0,0,0,h*.48);sky.addColorStop(0,'#77b9df');sky.addColorStop(1,'#cde9bc');fallbackCtx.fillStyle=sky;fallbackCtx.fillRect(0,0,w,h);const size=Math.min(w*.8,h*.68),left=(w-size)/2,top=Math.max(54,(h-size)/2+8),cell=size/10;fallbackCtx.fillStyle='#75ad52';fallbackCtx.fillRect(left,top,size,size);fallbackCtx.strokeStyle='#263e2b';fallbackCtx.lineWidth=4;fallbackCtx.strokeRect(left,top,size,size);fallbackCtx.fillStyle='#9a9b9b';fallbackCtx.fillRect(left+size*.46,top+size*.1,cell*1.2,cell*1.2);fallbackCtx.fillStyle='#8d603e';fallbackCtx.fillRect(left+size*.36,top+size*.67,cell*2.8,cell*1.8);fallbackCtx.fillStyle='#6b412d';fallbackCtx.fillRect(left+size*.48,top+size*.86,cell*.55,cell*.94);fallbackCtx.fillStyle='#c89b50';fallbackCtx.fillRect(left+size*.72,top+size*.53,cell*.72,cell*.72);const point=(x,z)=>[left+size*(x+50)/100,top+size*(z+50)/100];for(const player of fallbackPlayers.values()){player.x+=(player.targetX-player.x)*.18;player.z+=(player.targetZ-player.z)*.18;const [rx,rz]=point(player.x,player.z);fallbackCtx.fillStyle='#53b7d9';fallbackCtx.fillRect(rx-7,rz-7,14,14);fallbackCtx.fillStyle='#112330';fallbackCtx.font='11px monospace';fallbackCtx.fillText(String(player.name||'Miner').slice(0,12),rx+10,rz+4)}const [px,pz]=point(fx,fz);fallbackCtx.fillStyle='#f5dc45';fallbackCtx.fillRect(px-9,pz-9,18,18);fallbackCtx.fillStyle='#1c2630';fallbackCtx.fillRect(px-4,pz-4,3,3);fallbackCtx.fillRect(px+2,pz-4,3,3);fallbackCtx.font='12px monospace';fallbackCtx.fillStyle='#14221a';fallbackCtx.fillText('2D MULTIPLAYER · W A S D / FLECHAS PARA MOVERTE · T CHAT',16,h-24);fallbackCtx.fillText('WebGL no disponible · jugadores y chat siguen conectados al servidor',16,h-42);byId('fps').textContent='2D';if(now-lastFallbackFrame>150&&fallbackWs?.readyState===WebSocket.OPEN){lastFallbackFrame=now;fallbackWs.send(JSON.stringify({t:'move',x:fx,y:1.62,z:fz,yaw:0,moving:fallbackKeys.size>0}))}requestAnimationFrame(fallbackDraw)};
    const fallbackToggle=id=>{const el=byId(id);if(!el)return;for(const panel of document.querySelectorAll('.panel'))if(panel!==el)panel.classList.add('hidden');el.classList.toggle('hidden');document.body.classList.toggle('ui-open',!el.classList.contains('hidden'))};
    const fallbackPunch=()=>{const hand=byId('handOverlay');if(!hand)return;hand.classList.remove('punching');void hand.offsetWidth;hand.classList.add('punching');};
-   const fallbackSelectSkin=button=>{document.querySelectorAll('.skinChoice').forEach(choice=>choice.classList.toggle('active',choice===button));const hand=byId('handOverlay');hand?.style.setProperty('--hand-sleeve-left',button.dataset.shirt||'#238f94');hand?.style.setProperty('--hand-sleeve-right-top',button.dataset.shirt2||'#17666f');hand?.style.setProperty('--hand-sleeve-right-bottom',button.dataset.shirt||'#238f94');fallbackMessage('SYSTEM: skin '+(Number(button.dataset.skin)+1)+' equipada')};
    const fallbackStart=()=>{if(fallbackRunning)return;fallbackRunning=true;document.body.classList.add('playing');byId('start').style.display='none';byId('hud').hidden=false;byId('spawnPopup')?.classList.add('hidden');const hand=byId('handOverlay');hand?.style.setProperty('opacity','1');hand?.style.setProperty('visibility','visible');byId('contextHint').textContent='Modo compatible · muévete con WASD o flechas';byId('online').textContent='CONNECTING';fallbackConnect();requestAnimationFrame(fallbackDraw)};
    window.addEventListener('keydown',event=>{if(!fallbackRunning||event.target instanceof HTMLInputElement||event.target instanceof HTMLTextAreaElement)return;if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code)){event.preventDefault();fallbackKeys.add(event.code)}});window.addEventListener('keyup',event=>fallbackKeys.delete(event.code));window.addEventListener('blur',()=>fallbackKeys.clear());
    const fallbackStep=()=>{if(!fallbackRunning)return;const speed=0.7;if(fallbackKeys.has('KeyW')||fallbackKeys.has('ArrowUp'))fz-=speed;if(fallbackKeys.has('KeyS')||fallbackKeys.has('ArrowDown'))fz+=speed;if(fallbackKeys.has('KeyA')||fallbackKeys.has('ArrowLeft'))fx-=speed;if(fallbackKeys.has('KeyD')||fallbackKeys.has('ArrowRight'))fx+=speed;fx=Math.max(-47,Math.min(47,fx));fz=Math.max(-47,Math.min(47,fz));setTimeout(fallbackStep,50)};fallbackStep();
-   byId('play')?.addEventListener('click',fallbackStart);document.querySelectorAll('.skinChoice').forEach(button=>button.addEventListener('click',()=>fallbackSelectSkin(button)));fallbackCanvas.addEventListener('pointerdown',event=>{if(event.pointerType==='mouse'&&event.button!==0)return;fallbackPunch()});fallbackCanvas.addEventListener('contextmenu',event=>event.preventDefault());window.addEventListener('keydown',event=>{if(fallbackRunning&&event.code==='KeyF')fallbackPunch()});byId('chatBtn')?.addEventListener('click',()=>fallbackToggle('chatPanel'));byId('inventoryBtn')?.addEventListener('click',()=>fallbackToggle('inventoryPanel'));byId('menuBtn')?.addEventListener('click',()=>fallbackToggle('menuPanel'));byId('chatPanel')?.querySelector('[data-close]')?.addEventListener('click',()=>fallbackToggle('chatPanel'));byId('chatForm')?.addEventListener('submit',event=>{event.preventDefault();const input=byId('chatInput'),text=input?.value.trim();if(!text)return;if(fallbackWs?.readyState===WebSocket.OPEN)fallbackWs.send(JSON.stringify({t:'chat',text}));else fallbackMessage('SYSTEM: chat desconectado, reconectando…');input.value=''});window.addEventListener('online',fallbackConnect);document.addEventListener('visibilitychange',()=>{if(!document.hidden)fallbackConnect()});
+   byId('play')?.addEventListener('click',fallbackStart);fallbackCanvas.addEventListener('pointerdown',event=>{if(event.pointerType==='mouse'&&event.button!==0)return;fallbackPunch()});fallbackCanvas.addEventListener('contextmenu',event=>event.preventDefault());window.addEventListener('keydown',event=>{if(fallbackRunning&&event.code==='KeyF')fallbackPunch()});byId('chatBtn')?.addEventListener('click',()=>fallbackToggle('chatPanel'));byId('inventoryBtn')?.addEventListener('click',()=>fallbackToggle('inventoryPanel'));byId('menuBtn')?.addEventListener('click',()=>fallbackToggle('menuPanel'));byId('chatPanel')?.querySelector('[data-close]')?.addEventListener('click',()=>fallbackToggle('chatPanel'));byId('chatForm')?.addEventListener('submit',event=>{event.preventDefault();const input=byId('chatInput'),text=input?.value.trim();if(!text)return;if(fallbackWs?.readyState===WebSocket.OPEN)fallbackWs.send(JSON.stringify({t:'chat',text}));else fallbackMessage('SYSTEM: chat desconectado, reconectando…');input.value=''});window.addEventListener('online',fallbackConnect);document.addEventListener('visibilitychange',()=>{if(!document.hidden)fallbackConnect()});
    fallbackResize();window.addEventListener('resize',fallbackResize);window.BLOCKFUN_START=fallbackStart;window.BLOCKFUN_READY=true;window.dispatchEvent(new Event('blockfun-ready'));
   }else window.dispatchEvent(new CustomEvent('blockfun-error',{detail:message}));
  }else window.dispatchEvent(new CustomEvent('blockfun-error',{detail:message}));
