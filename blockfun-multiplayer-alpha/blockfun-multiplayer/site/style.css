@@ -359,3 +359,10 @@ body.playing #world{cursor:none}
 #inventoryPanel .avatarBody{background:linear-gradient(90deg,var(--sleeve,#17666f) 0 18%,var(--shirt,#238f94) 18% 82%,var(--sleeve,#17666f) 82% 100%)!important;border-color:var(--sleeve,#17666f)!important;box-shadow:inset 0 5px color-mix(in srgb,var(--accent,#66d9d4),transparent 55%),inset 0 -6px color-mix(in srgb,var(--sleeve,#17666f),#000 18%)!important}
 #inventoryPanel .avatarBody::before,#inventoryPanel .avatarBody::after{background:var(--shirt,#238f94)!important;border-color:var(--sleeve,#17666f)!important}
 #inventoryPanel .avatarLegs{background:linear-gradient(90deg,var(--pants,#243846) 0 46%,transparent 46% 54%,var(--pants,#243846) 54% 100%)!important;box-shadow:inset 0 -4px var(--shoe,#17212a)}
+/* Give the inventory character the same block-depth as the world model. */
+#inventoryPanel .playerPreview{perspective:260px;perspective-origin:50% 46%;}
+#inventoryPanel .avatarHead{transform:translateX(-50%) rotateY(-16deg) rotateX(3deg);transform-style:preserve-3d;filter:drop-shadow(4px 4px 0 #0007)}
+#inventoryPanel .avatarBody{transform:translateX(-50%) rotateY(-13deg) rotateX(3deg);transform-style:preserve-3d;filter:drop-shadow(4px 5px 0 #0007)}
+#inventoryPanel .avatarBody::before{transform:skewY(-4deg) translateX(-1px);box-shadow:inset 3px 0 #ffffff18}
+#inventoryPanel .avatarBody::after{transform:skewY(4deg) translateX(1px);box-shadow:inset -3px 0 #0003}
+#inventoryPanel .avatarLegs{transform:translateX(-50%) rotateY(-10deg);filter:drop-shadow(3px 4px 0 #0007)}
