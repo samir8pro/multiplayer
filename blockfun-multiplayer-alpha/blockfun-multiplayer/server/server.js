@@ -58,27 +58,28 @@ function broadcast(msg,exclude){for(const p of players.values())if(p.ws!==exclud
 const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
 const validNum=n=>typeof n==='number'&&Number.isFinite(n);
 const cleanName=n=>String(n||'Miner').replace(/[^\p{L}\p{N} _.-]/gu,'').slice(0,18)||'Miner';
-const profile=({id,x,y,z,yaw,skin,name,moving})=>({id,x,y,z,yaw,skin,avatar:skin,name,moving});
+const profile=({id,x,y,z,yaw,pitch,skin,name,moving,grounded,seated,sprinting})=>({id,x,y,z,yaw,pitch,skin,avatar:skin,name,moving,grounded,seated,sprinting});
 wss.on('connection',ws=>{
  if(players.size>=MAX){ws.close(1013,'Room full');return}
- const p={id:randomUUID().slice(0,8),ws,x:0,y:1.62,z:14,yaw:0,skin:Math.floor(Math.random()*4),name:'Miner',moving:false,last:Date.now(),chatAt:0,editAt:0,alive:true,window:Date.now(),messages:0};players.set(p.id,p);
+ const p={id:randomUUID().slice(0,8),ws,x:0,y:1.62,z:14,yaw:0,pitch:0,grounded:true,seated:false,sprinting:false,actionAt:0,skin:Math.floor(Math.random()*4),name:'Miner',moving:false,last:Date.now(),chatAt:0,editAt:0,alive:true,window:Date.now(),messages:0};players.set(p.id,p);
  send(ws,{t:'hello',id:p.id,players:[...players.values()].filter(a=>a!==p).map(profile),history});
  broadcast({t:'join',...profile(p)},ws);ws.on('pong',()=>p.alive=true);
  ws.on('message',bytes=>{
   const now=Date.now();if(now-p.window>=1000){p.window=now;p.messages=0}if(++p.messages>40){ws.close(1008,'Rate limit');return}
   let m;try{m=JSON.parse(bytes.toString())}catch{return}if(!m||typeof m!=='object')return;
   if(m.t==='profile'){p.name=cleanName(m.name);if(Number.isInteger(m.skin))p.skin=clamp(m.skin,0,3);broadcast({t:'profile',...profile(p)});return}
+  if(m.t==='action'&&m.action==='punch'){if(now-p.actionAt<220)return;p.actionAt=now;broadcast({t:'action',id:p.id,action:'punch'},ws);return}
   if(m.t==='chat'){
    if(now-p.chatAt<800||typeof m.text!=='string')return;const text=m.text.replace(/[\u0000-\u001f\u007f]/g,'').trim().slice(0,140);if(!text)return;p.chatAt=now;
    const message={t:'chat',id:p.id,name:p.name,text};history.push(message);if(history.length>30)history.shift();broadcast(message);return;
   }
-  if(m.t==='respawn'){Object.assign(p,{x:0,y:1.62,z:14,moving:false,last:now});broadcast({t:'move',...profile(p)});return}
+  if(m.t==='respawn'){Object.assign(p,{x:0,y:1.62,z:14,moving:false,grounded:true,seated:false,sprinting:false,last:now});broadcast({t:'move',...profile(p)});return}
   if(m.t==='move'){
    if(![m.x,m.y,m.z,m.yaw].every(validNum)||now-p.last<45)return;
    const x=clamp(m.x,-48.4,48.4),z=clamp(m.z,-48.4,48.4),y=clamp(m.y,-.5,20);
    const distance=Math.hypot(x-p.x,z-p.z),elapsed=Math.min(2,(now-p.last)/1000);
    if(distance>12*elapsed+1.5){send(ws,{t:'correct',x:p.x,y:p.y,z:p.z});return}
-   Object.assign(p,{x,y,z,yaw:clamp(m.yaw,-1e6,1e6),moving:!!m.moving,last:now});broadcast({t:'move',...profile(p)},ws);return;
+   Object.assign(p,{x,y,z,yaw:clamp(m.yaw,-1e6,1e6),pitch:validNum(m.pitch)?clamp(m.pitch,-1.25,1.25):0,moving:!!m.moving,grounded:m.grounded!==false,seated:!!m.seated,sprinting:!!m.sprinting,last:now});broadcast({t:'move',...profile(p)},ws);return;
   }
   if(m.t==='edit')send(ws,{t:'patch',x:m.x,z:m.z,state:0,request:m.request,rejected:'Spawn protected'});
  });
