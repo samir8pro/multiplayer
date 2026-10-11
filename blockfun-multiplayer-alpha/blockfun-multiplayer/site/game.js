@@ -291,8 +291,9 @@ function createAvatarRenderer(){
   // Keep movement unchanged; place the visible skin front on the opposite side.
   face([[a,c,g],[b,c,g],[b,e,g],[a,e,g]],[u+d,v+d,w,h],1);
   face([[b,c,f],[a,c,f],[a,e,f],[b,e,f]],[u+2*d+w,v+d,w,h],.86);
-  face([[a,c,f],[a,c,g],[a,e,g],[a,e,f]],[u,v+d,d,h],.90);
-  face([[b,c,g],[b,c,f],[b,e,f],[b,e,g]],[u+d+w,v+d,d,h],.94);
+  // Mirror only the lateral skin panels so the small side detail sits on the opposite corner.
+  face([[a,c,f],[a,c,g],[a,e,g],[a,e,f]],[u+d+w,v+d,d,h],.94);
+  face([[b,c,g],[b,c,f],[b,e,f],[b,e,g]],[u,v+d,d,h],.90);
   face([[a,e,g],[b,e,g],[b,e,f],[a,e,f]],[u+d,v,w,d],1);
   face([[a,c,f],[b,c,f],[b,c,g],[a,c,g]],[u+d+w,v,w,d],.78);
   const vertex=gl.createBuffer(),index=gl.createBuffer();
