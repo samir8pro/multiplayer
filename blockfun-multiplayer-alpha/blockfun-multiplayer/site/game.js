@@ -297,7 +297,7 @@ function avatarModel(skin,frame){
 }
 function getAvatarMesh(skin,frame){const key=skin+':'+frame;if(!avatarCache.has(key))avatarCache.set(key,avatarModel(skin,frame));return avatarCache.get(key)}
 function addChat(name,message,self=false){let log=$('chatLog'),l=document.createElement('div');l.className='chatMsg';let b=document.createElement('b');b.textContent=name+': ';l.append(b,document.createTextNode(message));log.append(l);while(log.children.length>45)log.firstChild.remove();log.scrollTop=log.scrollHeight;let p=document.createElement('div');p.textContent=name+': '+message;$('chatPreview').append(p);while($('chatPreview').children.length>3)$('chatPreview').firstChild.remove()}
-const player={name:'Miner',skin:Math.floor(Math.random()*skinPalettes.length),inventorySkin:Math.floor(Math.random()*suppliedSkinData.length)};
+const player={name:'Miner',skin:Math.floor(Math.random()*Math.min(4,skinPalettes.length)),inventorySkin:0};player.inventorySkin=player.skin%suppliedSkinData.length;
 function updatePreviewSkin(){
  const pv=document.querySelector('.playerPreview'),hand=$('handOverlay');
  const p=skinPalettes[player.skin%skinPalettes.length];
