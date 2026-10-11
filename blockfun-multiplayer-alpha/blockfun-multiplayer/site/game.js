@@ -288,8 +288,9 @@ function createAvatarRenderer(){
    for(let i=0;i<4;i++)vertices.push(...positions[i].map(n=>n/16),uv[i][0]/64,uv[i][1]/64,shade);
    indices.push(start,start+1,start+2,start,start+2,start+3);
   };
-  face([[a,c,g],[b,c,g],[b,e,g],[a,e,g]],[u+d,v+d,w,h],1);
-  face([[b,c,f],[a,c,f],[a,e,f],[b,e,f]],[u+2*d+w,v+d,w,h],.86);
+  // Player forward is -Z: put the skin's front there and its back on +Z.
+  face([[a,c,g],[b,c,g],[b,e,g],[a,e,g]],[u+2*d+w,v+d,w,h],.86);
+  face([[b,c,f],[a,c,f],[a,e,f],[b,e,f]],[u+d,v+d,w,h],1);
   face([[a,c,f],[a,c,g],[a,e,g],[a,e,f]],[u,v+d,d,h],.90);
   face([[b,c,g],[b,c,f],[b,e,f],[b,e,g]],[u+d+w,v+d,d,h],.94);
   face([[a,e,g],[b,e,g],[b,e,f],[a,e,f]],[u+d,v,w,d],1);
