@@ -72,7 +72,8 @@ function makeSkinTexture(p,variant){
  [x,y]=tile(5,p.shirt);ctx.fillStyle=p.skin;ctx.fillRect(x,y+23,32,9);ctx.fillStyle=p.shirt2;ctx.fillRect(x+4+(variantIndex%3)*3,y+5,5,14);
  tile(6,p.shirt2);[x,y]=tile(7,p.pants);ctx.fillStyle=p.shirt2;ctx.fillRect(x,y,32,7);ctx.fillStyle='#ffffff16';ctx.fillRect(x+5,y+10,5,14);
  [x,y]=tile(8,p.shoe);ctx.fillStyle=p.pants;ctx.fillRect(x,y,32,11);ctx.fillStyle=p.accent;ctx.fillRect(x+3,y+4,8,3);
- for(let n=9;n<32;n++)tile(n,n%2?p.shirt2:p.pants);
+ [x,y]=tile(9,p.skin);ctx.fillStyle='#ffffff18';ctx.fillRect(x+3,y+3,6,24);ctx.fillStyle='#00000022';ctx.fillRect(x+23,y,9,32);
+ for(let n=10;n<32;n++)tile(n,n%2?p.shirt2:p.pants);
  const tex=gl.createTexture();gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,0);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,c);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.generateMipmap(gl.TEXTURE_2D);return tex;
 }
 const skinTextures=skinPalettes.map((palette,index)=>makeSkinTexture(palette,index));
@@ -262,7 +263,9 @@ function avatarModel(skin,frame){
  B.box6(0,1.14,0,.56,.74,.31,4,4,3,4,5,5);
  B.box6(0,1.79,0,.47,.48,.46,2,1,0,1,1,1);
  limb(-.18,.46,0,.22,.92,.26,7,a,.88);limb(.18,.46,0,.22,.92,.26,7,-a,.88);
- limb(-.44,1.15,0,.20,.71,.24,5,-a,1.49);limb(.44,1.15,0,.20,.71,.24,5,a,1.49);
+ // Split each arm into a colored sleeve and a real skin-toned hand.
+ limb(-.44,1.27,0,.20,.46,.24,5,-a,1.49);limb(-.44,.95,0,.20,.18,.24,9,-a,1.49);
+ limb(.44,1.27,0,.20,.46,.24,5,a,1.49);limb(.44,.95,0,.20,.18,.24,9,a,1.49);
  B.box(-.18,.075,.06+Math.sin(a)*.10,.22,.15,.28,8);
  B.box(.18,.075,.06-Math.sin(a)*.10,.22,.15,.28,8);
  return makeMesh(B)
@@ -275,7 +278,7 @@ function updatePreviewSkin(){
  const p=skinPalettes[player.skin%skinPalettes.length];
  const ref=document.querySelector('.referenceSkin');if(ref)ref.dataset.skin=String(player.skin%skinPalettes.length);
  if(pv){pv.style.setProperty('--shirt',p.shirt);pv.style.setProperty('--sleeve',p.shirt2);pv.style.setProperty('--skin',p.skin);pv.style.setProperty('--hair',p.hair);pv.style.setProperty('--pants',p.pants);pv.style.setProperty('--shoe',p.shoe)}
- if(hand){hand.style.setProperty('--hand-sleeve-left',p.shirt);hand.style.setProperty('--hand-sleeve-right-top',p.shirt2);hand.style.setProperty('--hand-sleeve-right-bottom',p.shirt);hand.classList.remove('punching')}
+ if(hand){hand.style.setProperty('--hand-skin-left',p.skin);hand.style.setProperty('--hand-skin-right',p.skin);hand.style.setProperty('--hand-sleeve-left',p.shirt);hand.style.setProperty('--hand-sleeve-right-top',p.shirt2);hand.style.setProperty('--hand-sleeve-right-bottom',p.shirt);hand.classList.remove('punching')}
 }
 const playerTags=new Map();let lastTagUpdate=0;
 function showPlayerTags(now,vp){
@@ -457,7 +460,7 @@ requestAnimationFrame(tick);
    const fallbackMessage=text=>{const log=byId('chatLog');if(!log)return;const row=document.createElement('div');row.textContent=text;log.append(row);log.scrollTop=log.scrollHeight};
    const fallbackPalettes=[{shirt:'#238f94',shirt2:'#17666f',skin:'#d9956d',hair:'#563221',pants:'#243846',shoe:'#17212a',accent:'#66d9d4'},{shirt:'#d59b25',shirt2:'#9b6818',skin:'#9b694e',hair:'#211818',pants:'#4b3429',shoe:'#211815',accent:'#ffe36b'},{shirt:'#9d4b99',shirt2:'#673564',skin:'#e0b5a0',hair:'#2a1d25',pants:'#49304f',shoe:'#251c2a',accent:'#f181d0'},{shirt:'#b53650',shirt2:'#762536',skin:'#70462f',hair:'#191313',pants:'#30323b',shoe:'#17181d',accent:'#ff7081'}];
    const fallbackSkin=fallbackPalettes[Math.floor(Math.random()*fallbackPalettes.length)];
-   const fallbackApplySkin=()=>{const pv=document.querySelector('.playerPreview'),ref=document.querySelector('.referenceSkin'),hand=byId('handOverlay');if(ref)ref.dataset.skin=String(fallbackPalettes.indexOf(fallbackSkin));if(pv)for(const [key,value] of Object.entries({shirt:fallbackSkin.shirt,sleeve:fallbackSkin.shirt2,skin:fallbackSkin.skin,hair:fallbackSkin.hair,pants:fallbackSkin.pants,shoe:fallbackSkin.shoe,accent:fallbackSkin.accent}))pv.style.setProperty('--'+key,value);if(hand){hand.style.setProperty('--hand-sleeve-left',fallbackSkin.shirt);hand.style.setProperty('--hand-sleeve-right-top',fallbackSkin.shirt2);hand.style.setProperty('--hand-sleeve-right-bottom',fallbackSkin.shirt)}};
+   const fallbackApplySkin=()=>{const pv=document.querySelector('.playerPreview'),ref=document.querySelector('.referenceSkin'),hand=byId('handOverlay');if(ref)ref.dataset.skin=String(fallbackPalettes.indexOf(fallbackSkin));if(pv)for(const [key,value] of Object.entries({shirt:fallbackSkin.shirt,sleeve:fallbackSkin.shirt2,skin:fallbackSkin.skin,hair:fallbackSkin.hair,pants:fallbackSkin.pants,shoe:fallbackSkin.shoe,accent:fallbackSkin.accent}))pv.style.setProperty('--'+key,value);if(hand){hand.style.setProperty('--hand-skin-left',fallbackSkin.skin);hand.style.setProperty('--hand-skin-right',fallbackSkin.skin);hand.style.setProperty('--hand-sleeve-left',fallbackSkin.shirt);hand.style.setProperty('--hand-sleeve-right-top',fallbackSkin.shirt2);hand.style.setProperty('--hand-sleeve-right-bottom',fallbackSkin.shirt)}};
    const fallbackApplyPlayer=player=>{if(!player?.id)return;const old=fallbackPlayers.get(player.id)||{x:Number(player.x)||0,z:Number(player.z)||14};fallbackPlayers.set(player.id,{...old,...player,targetX:Number(player.x)||0,targetZ:Number(player.z)||14,x:old.x,z:old.z})};
    const fallbackSetOnline=()=>{online=fallbackPlayers.size+(fallbackWs?.readyState===WebSocket.OPEN?1:0);byId('online').textContent=(fallbackWs?.readyState===WebSocket.OPEN?online+' ONLINE':'OFFLINE')};
    const fallbackScheduleReconnect=()=>{if(!fallbackRunning||fallbackReconnectTimer)return;byId('online').textContent='RECONNECTING';fallbackReconnectTimer=setTimeout(()=>{fallbackReconnectTimer=null;fallbackConnect()},fallbackReconnectDelay);fallbackReconnectDelay=Math.min(10000,fallbackReconnectDelay*2)};
