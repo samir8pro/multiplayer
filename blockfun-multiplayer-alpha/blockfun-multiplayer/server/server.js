@@ -61,13 +61,13 @@ const cleanName=n=>String(n||'Miner').replace(/[^\p{L}\p{N} _.-]/gu,'').slice(0,
 const profile=({id,x,y,z,yaw,skin,name,moving})=>({id,x,y,z,yaw,skin,avatar:skin,name,moving});
 wss.on('connection',ws=>{
  if(players.size>=MAX){ws.close(1013,'Room full');return}
- const p={id:randomUUID().slice(0,8),ws,x:0,y:1.62,z:14,yaw:0,skin:Math.floor(Math.random()*4),name:'Miner',moving:false,last:Date.now(),chatAt:0,editAt:0,alive:true,window:Date.now(),messages:0};players.set(p.id,p);
+ const p={id:randomUUID().slice(0,8),ws,x:0,y:1.62,z:14,yaw:0,skin:0,name:'Miner',moving:false,last:Date.now(),chatAt:0,editAt:0,alive:true,window:Date.now(),messages:0};players.set(p.id,p);
  send(ws,{t:'hello',id:p.id,players:[...players.values()].filter(a=>a!==p).map(profile),history});
  broadcast({t:'join',...profile(p)},ws);ws.on('pong',()=>p.alive=true);
  ws.on('message',bytes=>{
   const now=Date.now();if(now-p.window>=1000){p.window=now;p.messages=0}if(++p.messages>40){ws.close(1008,'Rate limit');return}
   let m;try{m=JSON.parse(bytes.toString())}catch{return}if(!m||typeof m!=='object')return;
-  if(m.t==='profile'){p.name=cleanName(m.name);if(Number.isInteger(m.skin))p.skin=clamp(m.skin,0,3);broadcast({t:'profile',...profile(p)});return}
+  if(m.t==='profile'){p.name=cleanName(m.name);p.skin=0;broadcast({t:'profile',...profile(p)});return}
   if(m.t==='chat'){
    if(now-p.chatAt<800||typeof m.text!=='string')return;const text=m.text.replace(/[\u0000-\u001f\u007f]/g,'').trim().slice(0,140);if(!text)return;p.chatAt=now;
    const message={t:'chat',id:p.id,name:p.name,text};history.push(message);if(history.length>30)history.shift();broadcast(message);return;
