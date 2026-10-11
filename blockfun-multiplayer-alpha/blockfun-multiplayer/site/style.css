@@ -389,3 +389,13 @@ body.playing #world{cursor:none}
  #inventoryPanel .referenceSkin[data-skin="2"]{background-position:-110px 0}
  #inventoryPanel .referenceSkin[data-skin="3"]{background-position:-165px 0}
 }
+/* v41: compact touch controls; protected spawn has no block-edit buttons. */
+#mineBtn,#placeBtn{display:none!important}
+body.ui-open #handOverlay,body.ui-open #joystick,body.ui-open .gameActions{visibility:hidden!important;pointer-events:none!important}
+#handOverlay,#handOverlay *{pointer-events:none!important}
+#world,#joystick,.gameActions button{touch-action:none}
+@media(pointer:coarse){
+ #handOverlay{width:clamp(110px,25vw,190px)!important;right:calc(85px + env(safe-area-inset-right))!important;bottom:-12px!important}
+ .gameActions{right:calc(12px + env(safe-area-inset-right))!important;bottom:calc(92px + env(safe-area-inset-bottom))!important}
+ .gameActions button{min-width:48px;min-height:48px}
+}
