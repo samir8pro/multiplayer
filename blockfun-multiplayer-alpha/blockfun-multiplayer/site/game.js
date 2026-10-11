@@ -121,12 +121,12 @@ class Builder{constructor(){this.v=[];this.i=[]}
   this.quad([[a,c,e],[a,c,f],[a,d,f],[a,d,e]],[[0,0],[sz,0],[sz,sy],[0,sy]],leftT,.75);
   this.quad([[b,c,f],[b,c,e],[b,d,e],[b,d,f]],[[0,0],[sz,0],[sz,sy],[0,sy]],rightT,.80)}
 }
-const uintIndexExtension=gl.getExtension('OES_element_index_uint');
 function uploadMesh(vertices,indices,use32){const m={vertex:gl.createBuffer(),index:gl.createBuffer(),count:indices.length,indexType:use32?gl.UNSIGNED_INT:gl.UNSIGNED_SHORT};gl.bindBuffer(gl.ARRAY_BUFFER,m.vertex);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(vertices),gl.STATIC_DRAW);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,m.index);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,use32?new Uint32Array(indices):new Uint16Array(indices),gl.STATIC_DRAW);return m}
-function makeMesh(B){if(!B.i.length)return null;const vertexCount=B.v.length/7;if(vertexCount<=65535||uintIndexExtension)return uploadMesh(B.v,B.i,vertexCount>65535);
- // WebGL1 without OES_element_index_uint: split large meshes by complete quads.
+function makeMesh(B){if(!B.i.length)return null;const vertexCount=B.v.length/7;if(vertexCount<=65535)return uploadMesh(B.v,B.i,false);
+ // Always split large meshes by complete quads. This keeps the exact map
+ // geometry while avoiding browser/driver-specific 32-bit index corruption.
  const parts=[];let pv=[],pi=[];const flush=()=>{if(pi.length)parts.push(uploadMesh(pv,pi,false));pv=[];pi=[]};
- for(let q=0;q<B.i.length;q+=6){if(pv.length/7+4>65535)flush();const base=B.i[q],offset=pv.length/7;pv.push(...B.v.slice(base*7,(base+4)*7));pi.push(offset,offset+1,offset+2,offset,offset+2,offset+3)}flush();return {parts,count:parts.reduce((n,p)=>n+p.count,0)}
+ for(let q=0;q<B.i.length;q+=6){if(pv.length/7+4>65535)flush();const ids=[B.i[q],B.i[q+1],B.i[q+2],B.i[q+5]],offset=pv.length/7;for(const id of ids)pv.push(...B.v.slice(id*7,id*7+7));pi.push(offset,offset+1,offset+2,offset,offset+2,offset+3)}flush();return {parts,count:parts.reduce((n,p)=>n+p.count,0)}
 }
 function release(m){if(!m)return;if(m.parts){m.parts.forEach(release);return}gl.deleteBuffer(m.vertex);gl.deleteBuffer(m.index)}
 function drawMesh(m,dx=0,dy=0,dz=0,yaw=0){if(!m)return;if(m.parts){for(const part of m.parts)drawMesh(part,dx,dy,dz,yaw);return}gl.bindBuffer(gl.ARRAY_BUFFER,m.vertex);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,m.index);const s=7*4;gl.enableVertexAttribArray(attr.p);gl.vertexAttribPointer(attr.p,3,gl.FLOAT,false,s,0);gl.enableVertexAttribArray(attr.uv);gl.vertexAttribPointer(attr.uv,2,gl.FLOAT,false,s,12);gl.enableVertexAttribArray(attr.tile);gl.vertexAttribPointer(attr.tile,1,gl.FLOAT,false,s,20);gl.enableVertexAttribArray(attr.shade);gl.vertexAttribPointer(attr.shade,1,gl.FLOAT,false,s,24);gl.uniform3f(uni.offset,dx,dy,dz);gl.uniform1f(uni.yaw,yaw);gl.drawElements(gl.TRIANGLES,m.count,m.indexType,0)}
