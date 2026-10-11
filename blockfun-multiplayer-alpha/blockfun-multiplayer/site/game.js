@@ -18,7 +18,7 @@ function toast(message){$('toast').textContent=message;$('toast').style.opacity=
 function setContext(t){$('contextHint').textContent=t}
 // --- GLSL shader: one atlas, instanced-looking batch of exposed faces.
 const vs=`attribute vec3 aP; attribute vec2 aUV; attribute float aTile; attribute float aShade; uniform mat4 uVP; uniform vec3 uOffset; uniform float uYaw; varying vec2 vUV; varying float vTile; varying float vShade; varying vec3 vPos; void main(){float c=cos(uYaw),s=sin(uYaw);vec3 p=vec3(c*aP.x+s*aP.z,aP.y,-s*aP.x+c*aP.z)+uOffset;vPos=p;vUV=aUV;vTile=aTile;vShade=aShade;gl_Position=uVP*vec4(p,1.);}`;
-const fs=`precision mediump float; varying vec2 vUV; varying float vTile; varying float vShade; varying vec3 vPos; uniform sampler2D uAtlas; uniform vec3 uEye; uniform vec3 uSky; void main(){float t=floor(vTile+.1);vec2 at=vec2(mod(t,4.),floor(t/4.));vec2 uv=(at+mix(vec2(.012),vec2(.988),fract(vUV)))/vec2(4.,8.);vec4 texel=texture2D(uAtlas,uv);float plant=step(15.5,t);if(plant>.5&&texel.a<.12)discard;vec3 color=texel.rgb*vShade;if(t<.5)color*=vec3(.92,1.18,.86);if(t>17.5&&t<18.5)color*=vec3(.38,1.08,.32);float glass=step(13.55,vTile)*step(vTile,13.95);color=mix(color,vec3(.9,.05,.08)*vShade,glass*.82);float dist=distance(uEye,vPos);float fog=clamp((dist-41.)/24.,0.,1.);float alpha=mix(mix(1.,.38,glass),texel.a,plant);gl_FragColor=vec4(mix(color,uSky,fog),alpha);}`;
+const fs=`precision mediump float; varying vec2 vUV; varying float vTile; varying float vShade; varying vec3 vPos; uniform sampler2D uAtlas; uniform vec3 uEye; uniform vec3 uSky; void main(){float t=floor(vTile+.1);float raw=step(-.5,vTile);vec2 at=vec2(mod(t,4.),floor(t/4.));vec2 atlasUV=(at+mix(vec2(.012),vec2(.988),fract(vUV)))/vec2(4.,8.);vec2 uv=mix(atlasUV,clamp(vUV,vec2(.001),vec2(.999)),raw);vec4 texel=texture2D(uAtlas,uv);float plant=step(15.5,t);if((plant>.5||raw>.5)&&texel.a<.05)discard;vec3 color=texel.rgb*vShade;if(raw<.5&&t<.5)color*=vec3(.92,1.18,.86);if(raw<.5&&t>17.5&&t<18.5)color*=vec3(.38,1.08,.32);float glass=step(13.55,vTile)*step(vTile,13.95);color=mix(color,vec3(.9,.05,.08)*vShade,glass*.82);float dist=distance(uEye,vPos);float fog=clamp((dist-41.)/24.,0.,1.);float alpha=mix(mix(1.,.38,glass),texel.a,max(plant,raw));gl_FragColor=vec4(mix(color,uSky,fog),alpha);}`;
 function shader(type,src){let s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s}
 let program=gl.createProgram();gl.attachShader(program,shader(gl.VERTEX_SHADER,vs));gl.attachShader(program,shader(gl.FRAGMENT_SHADER,fs));gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));gl.useProgram(program);
 const attr={p:gl.getAttribLocation(program,'aP'),uv:gl.getAttribLocation(program,'aUV'),tile:gl.getAttribLocation(program,'aTile'),shade:gl.getAttribLocation(program,'aShade')};
@@ -77,9 +77,30 @@ function makeSkinTexture(p,variant){
  const tex=gl.createTexture();gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,0);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,c);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.generateMipmap(gl.TEXTURE_2D);return tex;
 }
 const skinTextures=skinPalettes.map((palette,index)=>makeSkinTexture(palette,index));
+// The four exact classic 64x64 skins supplied in c.zip.  They use the real
+// Minecraft UV layout below, instead of the old procedural 128x256 fallback.
+const suppliedSkinData=[
+ 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAACD0lEQVR4nO3asUsbURwH8O/73hVJhP4DXYrN4iIOTkpILVSpOPgPtFPBLbo46NZJOggKSimlFOqfoJMOLbiLi4O1FdpJEQRdYuLlXsHBuwuXd8ol5pLf+8DB+91790vu5fLuce8UEiy9GdKm+snJMePxpflPChlGCEcIRwhHCEcIRwhHCKfKrwaN9/k+1zEm8Hzj4WDCLGBl97Cj8wRCOHf23XRsxefv23fl8vuZpgmqN17s/o1vW+gGTGpgOvlewPs2nFvejC2L6YC1xbex5W7HhzT+efDndusl7kMavxx+gV6jGncURic03Sd38fnJEZQTXCgXf38Z79sDH1c1+/ub1l//PgZzuab1/5Y/GPMX1r9EJh5fvf1Uzx8I4QjhCOHU85GSdkL/eQ2NcOzVqpHYr3sIjxE342NgLh9k1BrMh+IG9atLMB+MEX6lYmyva7VI3Dh+aK9hJqqiQ8DJQtk4JhDCsZ3JixPjt5vIDiiGTjzLnUAIx3Yl3tv5EVvOGkI4t53Js/zLP0oHtML2s7NI/DTfZ3wiRUYv6oGE/IRw7tX5KeiEnvxqQIVi3/MisfbrIIO4+RyuO7DTX8CyLMuyLMuyLMuyLOuxqVYnTPt+QavX/5MQwhHCEcKptAnSvl9Qn3rd1vX/JIRwhHCEcIRwhHCEcIRwbq+v/ychhHPTJkj7fgEwhE5iRz89A/4DuoyUbcpAJKAAAAAASUVORK5CYII=',
+ 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAACFElEQVR4nO3aTUvcQBgH8P/8ExVfutWTLAjSUmR7WgrFQ8Gb1ZsePPTmre2px1LoFxC/gGBvhUI/QS9tKfTQQsWDva0edL34gj2olFZ2N5miBzcJ2UmX7LrZfeYHgZnM5MlmsplMJlFIcHcir03lT4rjxu1XPmwpZBghHCEcIRwhHCEcIRwhnJrMjxvv86T5Nq61TtqFsbR8cNTRcQIhnPvs0WRswZvv+9fpFzN3GgaoeX7s+rVvZXQDJlUwHXwv4P9WXP1Uik2LaYBXjwux6W7HZiqXDk+vll7iNlO5kB9Fr1HRFQvTBd3vOtf5jd3j0FigfHBivG//WJ/St4fr20dtbv/BrcHGf7zF13vG+KV390MDj7fvB1LNPxDCEcIRwqn5B/d0X+CavxzbB/uAi2oN/U49X/U8BOs/X6ogF7jmPV/D1Af8OqshN1Qv//3XR2648Xm4qISfNUYi/UelGi5nJNTDpzvGPoEQju0MXpydu1pENkAxcOBZbgRCOLYr8M/PH2PTWUMI57YzeJbP/I00QCt8/TIWyg/2OcYZKaWam2IkhHN3js/hBIZPGjqUv2xhJ/A06Ps6MlM8hG7GTv8Ay7Isy7Isy7Isy7Ksm6ZaHTDt9wWtfv+fhBCOEI4QTqUNkPb7gpfLXlvf/ychhCOEI4QjhCOEI4QjhHN7/f1/EkI4N22AtN8XTE/k0Ens6N4z4B+khJi1GOZkfwAAAABJRU5ErkJggg==',
+ 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAACFklEQVR4nO3asU/UUBwH8O/7XnsJ14SBxc1ZNDHCRuKAihGCZ3RlwQQnCMxOmrC4OMlI4qAJfwBCGBiAv4CAC5FFDQMLRhflaHslMNz1XXqvkt5xvfu9T9Kkv77X311f715fXp9CiuVX9yJT+eDwhPH8+7PvFHKMEI4QjhCOEI4QjhCOEE69n7pjfM73FQvGBEFoPB0qZRSw8OlrR8cJhHDO08mpxIK19ZXa/ovnL5smqPhB4vHV1c/oBkyrYLr4XsD/rbi49CFxX0wDvJlfSNzvdrxK5e3dg8utlzhXqTw6dAu9RjUeeHJ3MnKdYi3eO9oHWf+h/Dg+ND63l8eXIs/1mpYfnHxDye1rWv56560x/0r5ozbwuDlxmGn+gRCOEI4QTo3eHovcgls7cPEHi8cV/xTxPiEIfa18bGAEJbdUPz+qwtQH/K78gRer/88/hVesx40q4ZkWlxy9//CrvhZT6fd0ZmPO2CcQwrGdycsPHl9uIhugHLvwPDcCIRzblfjL1mbift4QwjntTJ7nO38tDdAKD6f/anG/FxlnpNg4Cblhzk8I53z/9RMF1md+L9o3HgdhoMXVKARVQRsJdjN2+gtYlmVZlmVZlmVZlmVdN9XqhFnXF7T6/X8aQjhCOEI4lTVB1vUFz248auv7/zSEcIRwhHCEcIRwhHCEcE6vv/9PQwjnZE2QdX0B0Nn1Bezop+fAOWLvkpDYAW3BAAAAAElFTkSuQmCC',
+ 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAACCElEQVR4nO3aT0sbQRgG8GeeHauoOVSCiCCI9lTaIpTiQfoBiidz0EuPPfTSWz+NeA9eeiiee2l7KJRCEdGDiCItBiMeAqJdd0eSQ7IbNrOVTcwm7/xgYSfz7pvsm2Rm/ymkmJuZNrb+N0+mrNtvfjtQyDFCOEI4QjhCOEI4QjhCODU7XbTO81T2adwY6+ZAyvZ/Kud9PU4ghNMbz2cSO7Z3z5rrb5dmOya4DZN/AeXffzEImBZg2/lhwP8N3PpxnLgupgDvlucT1wcd7xN8VK01lmGi7xO8UCxg2Kj2F14srRitW3U5OTmEYuuHUq2cWuft8stVU9CPOvbv1S4w7nWu+4fdL9b8O8trsWnn88h+pusPhHCEcIRw6umzV8aL/icN4EXGAN//Bx3pD8IA0fj3wRgm9UizXT8wjLbbXfrXmPRaY8RV4Fvjb8Ig1h734rF+GMbabBsB1n/uWMcEQjj2Mnlp5XVjEVmAUmTH81wEQjj2KvGn718T1/OGEE73Mnmev/kHKUA3/Hp8GmuPas96Rar9OCANIZw+r1ZA1apDvZ6MnP2FQRA7GzQmjMWjuIhBxn5/AMdxHMdxHMdxHMdxnIemup0w6/MF3b7/n4YQjhCOEE5lTZD1+YKPqtDT+/9pCOEI4QjhCOEI4QjhCOH0sN//T0MIp7MmyPx8wdQE+ol9ffccuANpyZEPlz48mAAAAABJRU5ErkJggg=='
+];
+function loadSuppliedSkin(index,src){const image=new Image();image.onload=()=>{gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,skinTextures[index]);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,0);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,image);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);window.BLOCKFUN_SUPPLIED_SKINS=(window.BLOCKFUN_SUPPLIED_SKINS||0)+1};image.onerror=()=>console.warn('Supplied skin '+index+' unavailable; keeping fallback');image.src=src}
+suppliedSkinData.forEach(loadSuppliedSkin);
+const inventoryPreviewCache=[];
+function applyInventoryPreview(index){
+ const ref=document.querySelector('.referenceSkin');if(!ref||!suppliedSkinData[index])return;
+ ref.dataset.skin=String(index);if(inventoryPreviewCache[index]){ref.style.backgroundImage=`url(${inventoryPreviewCache[index]})`;ref.style.backgroundSize='100% 100%';ref.style.backgroundPosition='0 0';return}
+ const image=new Image();image.onload=()=>{const c=document.createElement('canvas');c.width=68;c.height=138;const ctx=c.getContext('2d');ctx.imageSmoothingEnabled=false;
+  const draw=(rect,x,y,w,h)=>ctx.drawImage(image,rect[0],rect[1],rect[2],rect[3],x,y,w,h);
+  draw([8,8,8,8],18,0,32,32);draw([44,20,4,12],2,36,16,48);draw([20,20,8,12],18,36,32,48);draw([36,52,4,12],50,36,16,48);draw([4,20,4,12],18,84,16,48);draw([20,52,4,12],34,84,16,48);
+  inventoryPreviewCache[index]=c.toDataURL('image/png');if(ref.dataset.skin===String(index)){ref.style.backgroundImage=`url(${inventoryPreviewCache[index]})`;ref.style.backgroundSize='100% 100%';ref.style.backgroundPosition='0 0'}
+ };image.src=suppliedSkinData[index];
+}
 
 class Builder{constructor(){this.v=[];this.i=[]}
  quad(p,uv,t,sh=1){const j=this.v.length/7;for(let k=0;k<4;k++)this.v.push(p[k][0],p[k][1],p[k][2],uv[k][0],uv[k][1],t,sh);this.i.push(j,j+1,j+2,j,j+2,j+3)}
+ rawQuad(p,uv,sh=1){const j=this.v.length/7;for(let k=0;k<4;k++)this.v.push(p[k][0],p[k][1],p[k][2],uv[k][0],uv[k][1],-1,sh);this.i.push(j,j+1,j+2,j,j+2,j+3)}
  top(x1,x2,z1,z2,y,t,sh=1){this.quad([[x1,y,z1],[x2,y,z1],[x2,y,z2],[x1,y,z2]],[[0,0],[x2-x1,0],[x2-x1,z2-z1],[0,z2-z1]],t,sh)}
  side(x1,y1,z1,x2,y2,z2,t,sh=.78){this.quad([[x1,y1,z1],[x2,y1,z2],[x2,y2,z2],[x1,y2,z1]],[[0,0],[Math.hypot(x2-x1,z2-z1),0],[Math.hypot(x2-x1,z2-z1),y2-y1],[0,y2-y1]],t,sh)}
  box(x,y,z,sx,sy,sz,t){let a=x-sx/2,b=x+sx/2,c=y-sy/2,d=y+sy/2,e=z-sz/2,f=z+sz/2;this.top(a,b,e,f,d,t,1);this.quad([[a,c,f],[b,c,f],[b,d,f],[a,d,f]],[[0,0],[sx,0],[sx,sy],[0,sy]],t,.88);this.quad([[b,c,e],[a,c,e],[a,d,e],[b,d,e]],[[0,0],[sx,0],[sx,sy],[0,sy]],t,.7);this.quad([[a,c,e],[a,c,f],[a,d,f],[a,d,e]],[[0,0],[sz,0],[sz,sy],[0,sy]],t,.75);this.quad([[b,c,f],[b,c,e],[b,d,e],[b,d,f]],[[0,0],[sz,0],[sz,sy],[0,sy]],t,.8)}
@@ -253,23 +274,40 @@ let viewProj=null;
 const avatarCache=new Map();
 function avatarModel(skin,frame){
  let B=new Builder(),phase=Math.sin(frame*Math.PI/4),a=phase*.55;
- // Real leg/arm swing around hip/shoulder; shape stays blocky like Minecraft.
- function limb(x,y,z,sx,sy,sz,tex,angle,pivotY){
+ // Exact classic Minecraft skin layout from the supplied mapa_uv.json.
+ // The world uses +Z as front; x- is the character's right side.
+ const R={
+  head:{top:[8,0,8,8],bottom:[16,0,8,8],right:[0,8,8,8],front:[8,8,8,8],left:[16,8,8,8],back:[24,8,8,8]},
+  body:{top:[20,16,8,4],bottom:[28,16,8,4],right:[16,20,4,12],front:[20,20,8,12],left:[28,20,4,12],back:[32,20,8,12]},
+  armR:{top:[44,16,4,4],bottom:[48,16,4,4],right:[40,20,4,12],front:[44,20,4,12],left:[48,20,4,12],back:[52,20,4,12]},
+  armL:{top:[36,48,4,4],bottom:[40,48,4,4],right:[32,52,4,12],front:[36,52,4,12],left:[40,52,4,12],back:[44,52,4,12]},
+  legR:{top:[4,16,4,4],bottom:[8,16,4,4],right:[0,20,4,12],front:[4,20,4,12],left:[8,20,4,12],back:[12,20,4,12]},
+  legL:{top:[20,48,4,4],bottom:[24,48,4,4],right:[16,52,4,12],front:[20,52,4,12],left:[24,52,4,12],back:[28,52,4,12]}
+ };
+ const uv=(rect,flip=false)=>{const [x,y,w,h]=rect,u0=x/64,u1=(x+w)/64,v0=1-(y+h)/64,v1=1-y/64;return flip?[[u1,v0],[u0,v0],[u0,v1],[u1,v1]]:[[u0,v0],[u1,v0],[u1,v1],[u0,v1]]};
+ function skinBox(x,y,z,sx,sy,sz,faces){
+  const a0=x-sx/2,b0=x+sx/2,c=y-sy/2,d=y+sy/2,e=z-sz/2,f=z+sz/2;
+  B.rawQuad([[a0,d,e],[b0,d,e],[b0,d,f],[a0,d,f]],uv(faces.top),1);
+  B.rawQuad([[a0,c,e],[b0,c,e],[b0,c,f],[a0,c,f]],uv(faces.bottom,true),.64);
+  B.rawQuad([[a0,c,f],[b0,c,f],[b0,d,f],[a0,d,f]],uv(faces.front),.88);
+  B.rawQuad([[b0,c,e],[a0,c,e],[a0,d,e],[b0,d,e]],uv(faces.back,true),.70);
+  B.rawQuad([[a0,c,e],[a0,c,f],[a0,d,f],[a0,d,e]],uv(faces.right),.75);
+  B.rawQuad([[b0,c,f],[b0,c,e],[b0,d,e],[b0,d,f]],uv(faces.left,true),.80);
+ }
+ // Real leg/arm swing around hip/shoulder while keeping the supplied skin UVs.
+ function limb(x,y,z,sx,sy,sz,faces,angle,pivotY){
   const from=B.v.length;
-  B.box(x,y,z,sx,sy,sz,tex);
+  skinBox(x,y,z,sx,sy,sz,faces);
   const co=Math.cos(angle),sn=Math.sin(angle);
   for(let j=from;j<B.v.length;j+=7){const dy=B.v[j+1]-pivotY,dz=B.v[j+2];B.v[j+1]=pivotY+dy*co-dz*sn;B.v[j+2]=dy*sn+dz*co;}
  }
- B.box6(0,1.14,0,.56,.74,.31,4,4,3,4,5,5);
- // Keep the face readable from every multiplayer camera angle; the previous
- // side/back mapping made the head look like a solid black block.
- B.box6(0,1.79,0,.47,.48,.46,2,2,0,0,0,0);
- limb(-.18,.46,0,.22,.92,.26,7,a,.88);limb(.18,.46,0,.22,.92,.26,7,-a,.88);
- // Split each arm into a colored sleeve and a real skin-toned hand.
- limb(-.44,1.27,0,.20,.46,.24,5,-a,1.49);limb(-.44,.95,0,.20,.18,.24,9,-a,1.49);
- limb(.44,1.27,0,.20,.46,.24,5,a,1.49);limb(.44,.95,0,.20,.18,.24,9,a,1.49);
- B.box(-.18,.075,.06+Math.sin(a)*.10,.22,.15,.28,8);
- B.box(.18,.075,.06-Math.sin(a)*.10,.22,.15,.28,8);
+ const s=.07;
+ skinBox(0,1.22,0,8*s,12*s,4*s,R.body);
+ skinBox(0,1.92,0,8*s,8*s,8*s,R.head);
+ limb(-.14,.50,0,4*s,12*s,4*s,R.legR,a,.92);
+ limb(.14,.50,0,4*s,12*s,4*s,R.legL,-a,.92);
+ limb(-.42,1.22,0,4*s,12*s,4*s,R.armR,-a,1.64);
+ limb(.42,1.22,0,4*s,12*s,4*s,R.armL,a,1.64);
  return makeMesh(B)
 }
 function getAvatarMesh(skin,frame){const key=skin+':'+frame;if(!avatarCache.has(key))avatarCache.set(key,avatarModel(skin,frame));return avatarCache.get(key)}
@@ -278,7 +316,7 @@ const player={name:'Miner',skin:Math.floor(Math.random()*skinPalettes.length)};
 function updatePreviewSkin(){
  const pv=document.querySelector('.playerPreview'),hand=$('handOverlay');
  const p=skinPalettes[player.skin%skinPalettes.length];
- const ref=document.querySelector('.referenceSkin');if(ref)ref.dataset.skin=String(player.skin%skinPalettes.length);
+ const ref=document.querySelector('.referenceSkin');if(ref){ref.dataset.skin=String(player.skin%skinPalettes.length);applyInventoryPreview(player.skin%skinPalettes.length)}
  if(pv){pv.style.setProperty('--shirt',p.shirt);pv.style.setProperty('--sleeve',p.shirt2);pv.style.setProperty('--skin',p.skin);pv.style.setProperty('--hair',p.hair);pv.style.setProperty('--pants',p.pants);pv.style.setProperty('--shoe',p.shoe)}
  if(hand){hand.style.setProperty('--hand-skin-left',p.skin);hand.style.setProperty('--hand-skin-right',p.skin);hand.style.setProperty('--hand-sleeve-left',p.shirt);hand.style.setProperty('--hand-sleeve-right-top',p.shirt2);hand.style.setProperty('--hand-sleeve-right-bottom',p.shirt);hand.classList.remove('punching')}
 }
