@@ -66,7 +66,7 @@ function makeSkinTexture(p,variant){
  const variantIndex=Number.isFinite(variant)?variant:0;
  const tile=(n,color)=>{const x=n%4*32,y=Math.floor(n/4)*32;ctx.fillStyle=color;ctx.fillRect(x,y,32,32);return [x,y]};
  let [x,y]=tile(0,p.skin);ctx.fillStyle=p.hair;ctx.fillRect(x,y,32,8);ctx.fillRect(x,y+8,5,8);ctx.fillStyle='#29201c';ctx.fillRect(x+7,y+15,4,4);ctx.fillRect(x+21,y+15,4,4);ctx.fillStyle='#a9665a';ctx.fillRect(x+13,y+24,7,2);
- [x,y]=tile(1,p.skin);ctx.fillStyle=p.hair;ctx.fillRect(x,y,32,9);ctx.fillRect(x,y+9,32,5);ctx.fillStyle=p.skin;ctx.fillRect(x,y+14,32,18);[x,y]=tile(2,p.skin);ctx.fillStyle=p.hair;ctx.fillRect(x,y,32,7);
+ [x,y]=tile(1,p.skin);ctx.fillStyle=p.hair;ctx.fillRect(x,y,32,7);ctx.fillRect(x,y+7,5,7);ctx.fillStyle=p.skin;ctx.fillRect(x,y+14,32,18);ctx.fillStyle='#29201c';ctx.fillRect(x+7,y+16,4,4);ctx.fillRect(x+21,y+16,4,4);[x,y]=tile(2,p.skin);ctx.fillStyle=p.hair;ctx.fillRect(x,y,32,7);ctx.fillRect(x,y+7,5,7);
  [x,y]=tile(3,p.shirt);ctx.fillStyle=p.shirt2;ctx.fillRect(x,y+23,32,9);ctx.fillStyle=p.accent;ctx.fillRect(x+12,y+5,8,12);ctx.fillRect(x+8,y+9,16,4);
  [x,y]=tile(4,p.shirt2);ctx.fillStyle=p.accent;ctx.fillRect(x+5,y+6,22,5);
  [x,y]=tile(5,p.shirt);ctx.fillStyle=p.skin;ctx.fillRect(x,y+23,32,9);ctx.fillStyle=p.shirt2;ctx.fillRect(x+4+(variantIndex%3)*3,y+5,5,14);
